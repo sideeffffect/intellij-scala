@@ -587,7 +587,7 @@ trait ScalaConformance extends api.Conformance with TypeVariableUnification {
           case (Short, Int | Long | Float | Double) =>
             result = constraints
             return
-          case (Char, Byte | Short | Int | Long | Float | Double) =>
+          case (Char, Int | Long | Float | Double) =>
             result = constraints
             return
           case (Int, Long | Float | Double) =>
