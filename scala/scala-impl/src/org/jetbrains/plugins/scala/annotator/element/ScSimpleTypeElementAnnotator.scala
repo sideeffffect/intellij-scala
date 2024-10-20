@@ -6,7 +6,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.psi.PsiClass
 import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.extensions._
-import org.jetbrains.plugins.scala.lang.psi.api.base.types.{ScInfixTypeElement, ScParameterizedTypeElement, ScParenthesisedTypeElement, ScSimpleTypeElement, ScTypeArgs}
+import org.jetbrains.plugins.scala.lang.psi.api.base.types.{ScContextBound, ScInfixTypeElement, ScParameterizedTypeElement, ScParenthesisedTypeElement, ScSimpleTypeElement, ScTypeArgs}
 import org.jetbrains.plugins.scala.lang.psi.api.base.{ScAnnotationsHolder, ScPrimaryConstructor}
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScGenericCall
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction
@@ -68,8 +68,8 @@ object ScSimpleTypeElementAnnotator extends ElementAnnotator[ScSimpleTypeElement
         return false
 
       typeElement.parents.find(!_.is[ScParenthesisedTypeElement]).orNull match {
-        case ScParameterizedTypeElement(_, _)                        => false
-        case tp: ScTypeParam if tp.contextBoundTypeElement.contains(typeElement) => false
+        case ScParameterizedTypeElement(_, _)  => false
+        case _: ScContextBound                 => false
         case (_: ScTypeArgs) childOf (gc: ScGenericCall) =>
           gc.referencedExpr match {
             case ResolvesTo(f: ScFunction) => noHigherKinds(f)
