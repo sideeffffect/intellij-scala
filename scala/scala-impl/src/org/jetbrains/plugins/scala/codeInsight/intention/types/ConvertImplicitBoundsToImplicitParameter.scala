@@ -22,6 +22,7 @@ import org.jetbrains.plugins.scala.{ScalaBundle, isUnitTestMode}
 import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 
+//@TODO: review and adapt to 3.6+ new context bounds
 class ConvertImplicitBoundsToImplicitParameter extends PsiElementBaseIntentionAction with DumbAware {
   override def getFamilyName: String = ScalaBundle.message("family.name.convert.implicit.bounds")
 
@@ -66,11 +67,12 @@ object ConvertImplicitBoundsToImplicitParameter {
     val existingParams = existingClause.iterator.flatMap(_.parameters).toSeq
 
     val candidates = for {
-      tp <- parameterOwner.typeParameters
-      cb <- tp.contextBoundTypeElement
-      cbText = cb.getText
-      cbName = cbText.lowercased
-      typeText = cbText.parenthesize(!ScalaNamesValidator.isIdentifier(cbText))
+      tp       <- parameterOwner.typeParameters
+      cb       <- tp.contextBounds
+      cbTe     = cb.typeElement
+      teText   = cbTe.getText
+      cbName   = cb.name.getOrElse(teText.lowercased)
+      typeText = teText.parenthesize(!ScalaNamesValidator.isIdentifier(teText))
     } yield (cbName.escapeNonIdentifiers, (cbName + tp.name.capitalize).escapeNonIdentifiers, s"$typeText[${tp.name}]")
 
     val isUniqueName = candidates.groupBy(_._1).filter(_._2.sizeIs == 1).keySet
