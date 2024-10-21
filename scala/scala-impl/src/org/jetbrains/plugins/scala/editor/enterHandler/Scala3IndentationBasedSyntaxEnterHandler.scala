@@ -21,9 +21,12 @@ import org.jetbrains.plugins.scala.highlighter.ScalaCommenter
 import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
 import org.jetbrains.plugins.scala.lang.parser.ScalaElementType
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
+import org.jetbrains.plugins.scala.lang.psi.api.base.ScOptionalBracesOwner
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScCaseClause
 import org.jetbrains.plugins.scala.lang.psi.api.expr._
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScExtensionBody
+import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScPackaging
+import org.jetbrains.plugins.scala.lang.psi.impl.expr.ScBlockImpl
 import org.jetbrains.plugins.scala.lang.scaladoc.ScalaIsCommentComplete
 import org.jetbrains.plugins.scala.util.IndentUtil
 
@@ -156,17 +159,43 @@ object Scala3IndentationBasedSyntaxEnterHandler {
       case el => el
     }
 
-    val withLineCommentSkipped = beforeWhitespace match {
-      // for line comment we use prevCodeLeaf instead of prevSibling
-      // because currently line comments are not attached to the line in indentation-based block
-      case c: PsiComment if !c.startsFromNewLine() => PsiTreeUtil.prevCodeLeaf(c) match {
-        case null => c
-        case prev => prev
-      }
+    // We skip the comment except for the cases when it's the first and the only element after an empty body
+    val withCommentSkipped = beforeWhitespace match {
+      case comment: PsiComment =>
+        // We need to use the previous leaf instead of the sibling
+        // because currently comments at the end of the function body are not attached to the line in the indentation-based block
+        // Example:
+        // def foo =
+        //    println() // this comment belongs to the file, not the function
+        val prevLeaf = comment.prevLeafNotWhitespaceComment
+        if (prevLeaf.exists(isBeginningOfEmptyBody))
+          comment
+        else
+          prevLeaf.getOrElse(comment)
       case el => el
     }
-    withLineCommentSkipped
+    withCommentSkipped
   }
+
+  /**
+   * Example 1: {{{
+   *    ??? match {
+   *      case _ =>
+   *        //step 1<caret>
+   *      case _ =>
+   *    }
+   * }}}
+   * Example 2: {{{
+   *      def foo =
+   *         //step1<caret>
+   * }}}
+   */
+  private def isBeginningOfEmptyBody(elementBeforeComment: PsiElement): Boolean =
+    elementBeforeComment match {
+      case b: ScBlockImpl => b.getChildren.isEmpty
+      case _: PsiErrorElement => true
+      case _=> false
+    }
 
   /**
    * There are multiple cases when we need to insert extra space before caret
