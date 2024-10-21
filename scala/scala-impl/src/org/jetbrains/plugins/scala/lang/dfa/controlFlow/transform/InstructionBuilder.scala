@@ -81,7 +81,7 @@ abstract class InstructionBuilder(factory: DfaValueFactory,
 
   def flushFields(): Unit = addInstruction(new FlushFieldsInstruction)
 
-  def finish(element: PsiElement): Unit = addInstruction(new FinishElementInstruction(element))
+  def finish(@Nullable element: PsiElement): Unit = addInstruction(new FinishElementInstruction(element))
 
   def dup(stackValue: StackValue): StackValue = {
     stack.checkTop(stackValue)

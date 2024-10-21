@@ -596,7 +596,8 @@ object ScalaPsiElementFactory {
     `type`:            ScType,
     @NonNls name:      String,
     isVariable:        Boolean,
-    @NonNls exprText:  String,
+    @Nullable @NonNls
+    exprText:          String,
     features:          ScalaFeatures,
     isPresentableText: Boolean = false
   )(implicit
@@ -609,15 +610,15 @@ object ScalaPsiElementFactory {
       case tp                      => tp.canonicalText(tpc)
     }
 
-    val expr = createExpressionFromText(exprText, features)
-    createDeclaration(name, typeText, isVariable, expr, features)
+    val expr = NullSafe(exprText).map(createExpressionFromText(_, features))
+    createDeclaration(name, typeText, isVariable, expr.orNull, features)
   }
 
   def createDeclaration(
     @NonNls name:     String,
     @NonNls typeName: String,
     isVariable:       Boolean,
-    body:             ScExpression,
+    @Nullable body:   ScExpression,
     features:         ScalaFeatures
   )(implicit
     context: ProjectContext
@@ -627,14 +628,14 @@ object ScalaPsiElementFactory {
   private[this] def createMember(
     @NonNls name:     String,
     @NonNls typeName: String,
-    body:             ScExpression,
+    @Nullable body:   ScExpression,
     features:         ScalaFeatures,
     modifiers:        String  = "",
     isVariable:       Boolean = false
   )(implicit
     context: ProjectContext
   ): ScMember = {
-    def stmtText(expr: ScBlockStatement): String = expr match {
+    def stmtText(@Nullable expr: ScBlockStatement): String = expr match {
       case block @ ScBlock(st) if !block.hasRBrace =>
         stmtText(st)
       case WithParenthesesStripped(fun @ ScFunctionExpr(parSeq, Some(result))) =>
@@ -1366,11 +1367,11 @@ object ScalaPsiElementFactory {
   }
 
   def createElementWithContext[E <: ScalaPsiElement](
-    @NonNls text: String,
-    context:      PsiElement,
-    child:        PsiElement,
-    features:     ScalaFeatures,
-  )(parse:        ScalaPsiBuilder => AnyVal
+    @NonNls text:      String,
+    @Nullable context: PsiElement,
+    child:             PsiElement,
+    features:          ScalaFeatures,
+  )(parse:             ScalaPsiBuilder => AnyVal
   )(implicit
     tag: ClassTag[E],
     ctx: ProjectContext
@@ -1775,12 +1776,15 @@ object ScalaPsiElementFactory {
     clazz.members.head
   }
 
-  final class ScalaPsiElementCreationException(message: String, cause: Throwable)
+  final class ScalaPsiElementCreationException(message: String, @Nullable cause: Throwable)
     extends IncorrectOperationException(message, cause)
 
   private object ScalaPsiElementCreationException {
 
-    def apply(@NonNls kind: String, @NonNls text: String, context: PsiElement = null, cause: Throwable = null): ScalaPsiElementCreationException = {
+    def apply(@NonNls kind: String,
+              @NonNls text: String,
+              @Nullable context: PsiElement = null,
+              @Nullable cause: Throwable = null): ScalaPsiElementCreationException = {
       val contextSuffix = context match {
         case null => ""
         case _ => "; with context: " + context.getText
