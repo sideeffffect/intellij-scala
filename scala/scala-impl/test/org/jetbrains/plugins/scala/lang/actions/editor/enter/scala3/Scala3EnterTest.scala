@@ -891,12 +891,27 @@ class Scala3EnterTest extends DoEditorStateTestOps with Scala2AndScala3EnterActi
   }
 
 
-  def testAfterComment_InTheEndOfIndentedRegion_EmptyRegion(): Unit = {
-    runEnterTestInAllWrapperContexts(
-      s"""// line comment$CARET""",
-      s"""// line comment
-         |$CARET""".stripMargin,
-      IndentedBlockContexts.AllContextsAcceptingStatements
+  def testAfterComment_InTheEndOfIndentedRegion_EmptyRegion_InFunctionDefinition(): Unit = {
+    checkGeneratedTextAfterEnter(
+      s"""def test =
+         |  // line comment$CARET""".stripMargin,
+      s"""def test =
+         |  // line comment
+         |  $CARET""".stripMargin,
+    )
+  }
+
+  def testAfterComment_InTheEndOfIndentedRegion_EmptyRegion_InCaseBranch(): Unit = {
+    checkGeneratedTextAfterEnter(
+      s"""??? match
+         |  case _ =>
+         |    //step 1$CARET
+         |  case _ =>""".stripMargin,
+      s"""??? match
+         |  case _ =>
+         |    //step 1
+         |    $CARET
+         |  case _ =>""".stripMargin,
     )
 
     checkGeneratedTextAfterEnter(
@@ -962,14 +977,27 @@ class Scala3EnterTest extends DoEditorStateTestOps with Scala2AndScala3EnterActi
   }
 
   def testAfterComment_InTheEndOfIndentedBlock_UnindentedComment(): Unit = {
-    runEnterTestInAllWrapperContexts(
-      s"""  println()
+    checkGeneratedTextAfterEnter(
+      s"""def test =
+         |  println()
          |// line comment$CARET""".stripMargin,
-      s"""  println()
+      //NOTE: this is not a strong
+      s"""def test =
+         |  println()
          |// line comment
-         |$CARET""".stripMargin,
-      IndentedBlockContexts.AllContextsAcceptingStatements,
-      additionalBodyIndentSize = 0
+         |  $CARET""".stripMargin,
+    )
+
+    checkGeneratedTextAfterEnter(
+      s"""def test =
+         |  println()
+         |
+         |// line comment$CARET""".stripMargin,
+      s"""def test =
+         |  println()
+         |
+         |// line comment
+         |  $CARET""".stripMargin
     )
 
     checkGeneratedTextAfterEnter(
@@ -1017,6 +1045,204 @@ class Scala3EnterTest extends DoEditorStateTestOps with Scala2AndScala3EnterActi
          |$CARET
          |""".stripMargin,
       IndentedBlockContexts.AllContextsAcceptingStatements
+    )
+  }
+
+  def testAfterUnindentedLineComment(): Unit = {
+    checkGeneratedTextAfterEnter(
+      s"""def foo =
+         |  def bar =
+         |    111
+         |//  line comment$CARET
+         |    333
+         |""".stripMargin,
+      s"""def foo =
+         |  def bar =
+         |    111
+         |//  line comment
+         |    $CARET
+         |    333
+         |""".stripMargin
+    )
+  }
+
+  def testAfterUnindentedLineComment_MultipleComments(): Unit = {
+    checkGeneratedTextAfterEnter(
+      s"""def foo =
+         |  def bar =
+         |    111
+         |//  line comment 1
+         |//  line comment 2
+         |//  line comment 3$CARET
+         |    333
+         |""".stripMargin,
+      s"""def foo =
+         |  def bar =
+         |    111
+         |//  line comment 1
+         |//  line comment 2
+         |//  line comment 3
+         |    $CARET
+         |    333
+         |""".stripMargin,
+    )
+  }
+
+  def testAfterUnindentedLineComment_MultipleComments_InTheMiddleOfTheComment(): Unit = {
+    checkGeneratedTextAfterEnter(
+      s"""def foo =
+         |  def bar =
+         |    111
+         |//  line comment 1
+         |//  line comment 2$CARET
+         |//  line comment 3
+         |    333
+         |""".stripMargin,
+      s"""def foo =
+         |  def bar =
+         |    111
+         |//  line comment 1
+         |//  line comment 2
+         |    $CARET
+         |//  line comment 3
+         |    333
+         |""".stripMargin,
+    )
+  }
+
+  def testAfterUnindentedLineComment_InsideBlockWithBRaces_CaretFarAwayFromComment(): Unit = {
+    checkGeneratedTextAfterEnter(
+      s"""class A {
+         |  def test =
+         |    println()
+         |//    println()
+         |
+         |  $CARET
+         |}""".stripMargin,
+      s"""class A {
+         |  def test =
+         |    println()
+         |//    println()
+         |
+         |  ${""}
+         |  $CARET
+         |}""".stripMargin,
+    )
+  }
+
+  def testAfterTrailingUnindentedLineComment(): Unit = {
+    checkGeneratedTextAfterEnter(
+      s"""def foo =
+         |  def bar =
+         |    111
+         |    222
+         |//  line comment 1$CARET
+         |""".stripMargin,
+      s"""def foo =
+         |  def bar =
+         |    111
+         |    222
+         |//  line comment 1
+         |    $CARET
+         |""".stripMargin,
+    )
+  }
+
+  def testAfterTrailingUnindentedLineComment_1(): Unit = {
+    checkGeneratedTextAfterEnter(
+      s"""def foo =
+         |  def bar =
+         |    111
+         |    222
+         |//  line comment 1
+         |//  line comment 2
+         |//  line comment 3$CARET
+         |""".stripMargin,
+      s"""def foo =
+         |  def bar =
+         |    111
+         |    222
+         |//  line comment 1
+         |//  line comment 2
+         |//  line comment 3
+         |    $CARET
+         |""".stripMargin,
+    )
+  }
+
+  def testAfterTrailingUnindentedLineComment_3(): Unit = {
+    checkGeneratedTextAfterEnter(
+      s"""def foo =
+         |  def bar =
+         |    111
+         |    222
+         |//  line comment 1
+         |//  line comment 2$CARET
+         |//  line comment 3
+         |""".stripMargin,
+      s"""def foo =
+         |  def bar =
+         |    111
+         |    222
+         |//  line comment 1
+         |//  line comment 2
+         |    $CARET
+         |//  line comment 3
+         |""".stripMargin,
+    )
+  }
+
+  def testAfterTrailingUnindentedLineComment_NextedFunctionWithAndWithoutBraces(): Unit = {
+    checkGeneratedTextAfterEnter(
+      s"""def foo = {
+         |  def bar =
+         |    println()
+         |    println()
+         |  //  println()$CARET
+         |}""".stripMargin,
+      s"""def foo = {
+         |  def bar =
+         |    println()
+         |    println()
+         |  //  println()
+         |    $CARET
+         |}""".stripMargin,
+    )
+  }
+
+  def testAfterTrailingUnindentedLineComment_NextedFunctionWithAndWithoutBraces_CaretAtNextLine(): Unit = {
+    checkGeneratedTextAfterEnter(
+      s"""def foo = {
+         |  def bar =
+         |    println()
+         |    println()
+         |  //  println()
+         |  $CARET
+         |}""".stripMargin,
+      s"""def foo = {
+         |  def bar =
+         |    println()
+         |    println()
+         |  //  println()
+         |  ${""}
+         |  $CARET
+         |}""".stripMargin,
+    )
+  }
+
+  def testAfterTrailingUnindentedLineComment_NextedFunctionInObject(): Unit = {
+    checkGeneratedTextAfterEnter(
+      s"""object O:
+         |  def test =
+         |    println()
+         |  // line comment$CARET
+         |""".stripMargin,
+      s"""object O:
+         |  def test =
+         |    println()
+         |  // line comment
+         |    $CARET
+         |""".stripMargin,
     )
   }
 
