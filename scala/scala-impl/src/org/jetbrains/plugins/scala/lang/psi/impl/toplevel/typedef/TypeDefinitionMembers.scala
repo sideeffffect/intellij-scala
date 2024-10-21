@@ -7,6 +7,7 @@ import com.intellij.psi.impl.light.LightMethod
 import com.intellij.psi.scope.{ElementClassHint, NameHint, PsiScopeProcessor}
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiTreeUtil.isContextAncestor
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil._
 import org.jetbrains.plugins.scala.lang.psi.api.PropertyMethods._
@@ -157,6 +158,7 @@ object TypeDefinitionMembers {
     clazz:      PsiClass,
     processor:  PsiScopeProcessor,
     state:      ResolveState,
+    @Nullable
     lastParent: PsiElement,
     place:      PsiElement
   ): Boolean = {
@@ -205,6 +207,7 @@ object TypeDefinitionMembers {
   def processSuperDeclarations(td: ScTemplateDefinition,
                                processor: PsiScopeProcessor,
                                state: ResolveState,
+                               @Nullable
                                lastParent: PsiElement,
                                place: PsiElement): Boolean = {
 
@@ -220,6 +223,7 @@ object TypeDefinitionMembers {
   def processDeclarations(comp: ScCompoundType,
                           processor: PsiScopeProcessor,
                           state: ResolveState,
+                          @Nullable
                           lastParent: PsiElement,
                           place: PsiElement): Boolean = {
 
@@ -239,6 +243,7 @@ object TypeDefinitionMembers {
     tpe:        ScAndType,
     processor:  PsiScopeProcessor,
     state:      ResolveState,
+    @Nullable
     lastParent: PsiElement,
     place:      PsiElement
   ): Boolean = {
@@ -432,19 +437,19 @@ object TypeDefinitionMembers {
   }
 
   private def shouldProcessJavaInnerClasses(processor: PsiScopeProcessor): Boolean = {
-    if (processor.isInstanceOf[BaseProcessor]) return false
+    if (processor.is[BaseProcessor]) return false
     val hint = processor.getHint(ElementClassHint.KEY)
     hint == null || hint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)
   }
 
   private def mayProcessTypeSignature(processor: PsiScopeProcessor, typeSignature: TypeSignature): Boolean = {
-    if (processor.isInstanceOf[BaseProcessor]) true
-    else typeSignature.namedElement.isInstanceOf[ScTypeDefinition]
+    if (processor.is[BaseProcessor]) true
+    else typeSignature.namedElement.is[ScTypeDefinition]
   }
 
   def processEnum(clazz: PsiClass, process: PsiMethod => Boolean): Boolean = {
     var containsValues = false
-    if (clazz.isEnum && !clazz.isInstanceOf[ScTemplateDefinition]) {
+    if (clazz.isEnum && !clazz.is[ScTemplateDefinition]) {
       containsValues = clazz.getMethods.exists {
         method =>
           method.getName == "values" && method.getParameterList.getParametersCount == 0 && isStaticJava(method)
@@ -483,7 +488,7 @@ object TypeDefinitionMembers {
 
   private def processSyntheticAnyRefAndAny(processor: PsiScopeProcessor,
                                            state: ResolveState,
-                                           lastParent: PsiElement,
+                                           @Nullable lastParent: PsiElement,
                                            place: PsiElement): Boolean = {
     implicit val context: ProjectContext = place
 
@@ -494,7 +499,7 @@ object TypeDefinitionMembers {
   private def processSyntheticClass(stdType: StdType,
                                     processor: PsiScopeProcessor,
                                     state: ResolveState,
-                                    lastParent: PsiElement,
+                                    @Nullable lastParent: PsiElement,
                                     place: PsiElement): Boolean = {
     stdType.syntheticClass.forall(_.processDeclarations(processor, state, lastParent, place))
   }
@@ -519,7 +524,7 @@ object TypeDefinitionMembers {
   }
 
   private object stdLibPatches {
-    val map = Map(
+    private val map = Map(
       "scala.Predef" -> "scala.runtime.stdLibPatches.Predef",
       "scala.language" -> "scala.runtime.stdLibPatches.language"
     )

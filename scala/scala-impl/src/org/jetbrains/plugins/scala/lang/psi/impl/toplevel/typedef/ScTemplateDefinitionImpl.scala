@@ -14,6 +14,7 @@ import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.scope.processor.MethodsProcessor
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.{PsiTreeUtil, PsiUtil}
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.scala.caches.{ModTracker, ScalaShortNamesCacheManager, cached, cachedInUserData}
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.TokenSets.RBRACE_OR_END_STMT
@@ -291,7 +292,7 @@ abstract class ScTemplateDefinitionImpl[T <: ScTemplateDefinition] private[impl]
 
   def processDeclarationsForTemplateBody(processor: PsiScopeProcessor,
                                          oldState: ResolveState,
-                                         lastParent: PsiElement,
+                                         @Nullable lastParent: PsiElement,
                                          place: PsiElement): Boolean = {
     if (DumbService.getInstance(getProject).isDumb) return true
     //exception cases
@@ -358,7 +359,7 @@ abstract class ScTemplateDefinitionImpl[T <: ScTemplateDefinition] private[impl]
                   ///** [[Example.myMethod]] */class Example { def myMethod: Int = 42 }
                   //The issue is that ScalaDoc element is attached to the definition
                   //so `isContextAncestor(this, place, true)` returns true and magicCondition1 becomes false
-                  place.isInstanceOf[ScDocResolvableCodeReference]) {
+                  place.is[ScDocResolvableCodeReference]) {
                   this match {
                     case t: ScTypeDefinition =>
                       selfTypeElement match {

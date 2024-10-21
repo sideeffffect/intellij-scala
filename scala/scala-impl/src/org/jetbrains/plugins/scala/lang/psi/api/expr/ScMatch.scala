@@ -9,7 +9,6 @@ trait ScMatch extends ScExpression {
 
   def expressions: Seq[ScExpression] = clauses.flatMap(_.expr)
 
-  @Nullable
   def caseClauses: Option[ScCaseClauses] = findChild[ScCaseClauses]
 
   def clauses: Seq[ScCaseClause] = caseClauses.fold(Seq.empty[ScCaseClause])(_.caseClauses)

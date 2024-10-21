@@ -36,8 +36,8 @@ package object result {
 
   implicit class TypeableExt(private val typeable: ScalaPsiElement with Typeable) extends AnyVal {
 
-    def flatMap[E <: ScalaPsiElement](maybeElement: Option[E])
-                                     (function: E => TypeResult): TypeResult =
+    def flatMap[E](maybeElement: Option[E])
+                  (function: E => TypeResult): TypeResult =
       maybeElement.map(function)
         .getOrElse(Failure(ScalaBundle.message("no.element.found")))
 
