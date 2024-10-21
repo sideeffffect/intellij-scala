@@ -19,12 +19,10 @@ import scala.annotation.tailrec
  */
 object SimpleType extends SimpleType {
   override protected def typeArgs: TypeArgs = TypeArgs
-  override protected def types: Types = Types
 }
 
 trait SimpleType {
   protected def typeArgs: TypeArgs
-  protected def types: Types
 
   final def apply(isPattern: Boolean, multipleSQBrackets: Boolean = true)(implicit builder: ScalaPsiBuilder): Boolean = {
     @tailrec
@@ -65,37 +63,7 @@ trait SimpleType {
     }
     val simpleMarker = builder.mark()
     builder.getTokenType match {
-      case ScalaTokenTypes.tLPARENTHESIS =>
-        val tupleMarker = builder.mark()
-        builder.advanceLexer()
-        builder.disableNewlines()
-        val (_, isTuple) = types(isPattern, typeVariables = true)
-        builder.getTokenType match {
-          case ScalaTokenTypes.tCOMMA =>
-            builder.advanceLexer() //Ate ,
-            builder.getTokenType match {
-              case ScalaTokenTypes.tRPARENTHESIS =>
-                builder.advanceLexer() //Ate )
-                if (isTuple) tupleMarker.done(ScalaElementType.TUPLE_TYPE)
-                else {
-                  builder.error(ScalaBundle.message("identifier.expected.comma.found"))
-                  tupleMarker.done(ScalaElementType.TYPE_IN_PARENTHESIS)
-                }
-              case _ =>
-                builder error ScalaBundle.message("rparenthesis.expected")
-                if (isTuple) tupleMarker.done(ScalaElementType.TUPLE_TYPE)
-                else tupleMarker.done(ScalaElementType.TYPE_IN_PARENTHESIS)
-            }
-          case ScalaTokenTypes.tRPARENTHESIS =>
-            builder.advanceLexer() //Ate )
-            if (isTuple) tupleMarker.done(ScalaElementType.TUPLE_TYPE)
-            else tupleMarker.done(ScalaElementType.TYPE_IN_PARENTHESIS)
-          case _ =>
-            builder error ScalaBundle.message("rparenthesis.expected")
-            if (isTuple) tupleMarker.done(ScalaElementType.TUPLE_TYPE)
-            else tupleMarker.done(ScalaElementType.TYPE_IN_PARENTHESIS)
-        }
-        builder.restoreNewlinesState()
+      case ScalaTokenTypes.tLPARENTHESIS => TupleOrNamedTupleOrParenthesizedType(isPattern, typeVariables = true)
       case ScalaTokenTypes.tUNDER if builder.features.hasUnderscoreWildcardsDisabled =>
         val simpleTypeMarker = builder.mark()
         val refMarker = builder.mark()
