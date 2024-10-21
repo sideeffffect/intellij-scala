@@ -48,6 +48,7 @@ object ASTNodeToPsiElement {
       case ANNOT_TYPE => new ScAnnotTypeElementImpl(node)
       case WILDCARD_TYPE => new ScWildcardTypeElementImpl(node)
       case TUPLE_TYPE => new ScTupleTypeElementImpl(node)
+      case NAMED_TUPLE_TYPE => new ScNamedTupleTypeElementImpl(node)
       case TYPE_IN_PARENTHESIS => new ScParenthesisedTypeElementImpl(node)
       case TYPE_PROJECTION => new ScTypeProjectionImpl(node)
       case TYPE_GENERIC_CALL => new ScParameterizedTypeElementImpl(node)
@@ -66,6 +67,7 @@ object ASTNodeToPsiElement {
       case TYPES => new ScTypesImpl(node)
       case TYPE_CASE_CLAUSES => new ScMatchTypeCasesImpl(node)
       case TYPE_CASE_CLAUSE => new ScMatchTypeCaseImpl(node)
+      case NAMED_TUPLE_TYPE_COMPONENT => new ScNamedTupleTypeComponentImpl(node)
 
       /* Expressions */
       case PREFIX_EXPR => new ScPrefixExprImpl(node)
@@ -85,6 +87,7 @@ object ASTNodeToPsiElement {
       case QUOTED_BLOCK => new ScQuotedBlockImpl(node)
       case QUOTED_TYPE => new ScQuotedTypeImpl(node)
       case TUPLE => new ScTupleImpl(node)
+      case NAMED_TUPLE => new ScNamedTupleImpl(node)
       case UNIT_EXPR => new ScUnitExprImpl(node)
       case CONSTR_BLOCK_EXPR => new ScConstrBlockExprImpl(node)
       case SELF_INVOCATION => new ScSelfInvocationImpl(node)
@@ -121,6 +124,7 @@ object ASTNodeToPsiElement {
       case GUARD => new ScGuardImpl(node)
       case ARG_EXPRS => new ScArgumentExprListImpl(node)
       case INTERPOLATED_PREFIX_PATTERN_REFERENCE => new ScInterpolatedPatternPrefix(node)
+      case NAMED_TUPLE_COMPONENT => new ScNamedTupleExprComponentImpl(node)
 
       /* Patterns */
       case TUPLE_PATTERN => new ScTuplePatternImpl(node)
@@ -140,6 +144,8 @@ object ASTNodeToPsiElement {
       case PATTERN_IN_PARENTHESIS => new ScParenthesisedPatternImpl(node)
       case GIVEN_PATTERN => new ScGivenPatternImpl(node)
       case SCALA3_TYPED_PATTERN => new Sc3TypedPatternImpl(node)
+      case NAMED_TUPLE_PATTERN => new ScNamedTuplePatternImpl(node)
+      case NAMED_TUPLE_PATTERN_COMPONENT => new ScNamedTuplePatternComponentImpl(node)
 
       /* Type patterns */
       case TYPE_PATTERN => new ScTypePatternImpl(node)

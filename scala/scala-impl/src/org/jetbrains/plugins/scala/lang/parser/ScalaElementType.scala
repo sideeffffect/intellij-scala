@@ -175,6 +175,7 @@ object ScalaElementType {
   val ANNOT_TYPE: ScTypeElementType = new ScTypeElementType("annotation type")
   val WILDCARD_TYPE: ScTypeElementType = new ScTypeElementType("wildcard type")
   val TUPLE_TYPE: ScTypeElementType = new ScTypeElementType("tuple type")
+  val NAMED_TUPLE_TYPE: ScTypeElementType = new ScTypeElementType("named tuple type")
   val TYPE_IN_PARENTHESIS: ScTypeElementType = new ScTypeElementType("type in parenthesis")
   val TYPE_PROJECTION: ScTypeElementType = new ScTypeElementType("type projection")
   val TYPE_GENERIC_CALL: ScTypeElementType = new ScTypeElementType("type generic call")
@@ -197,6 +198,7 @@ object ScalaElementType {
   val TYPE_CASE_CLAUSES: ScalaElementType = new ScalaElementType("match type cases")
 
   val TYPE_CASE_CLAUSE: ScalaElementType = new ScalaElementType("match type case")
+  val NAMED_TUPLE_TYPE_COMPONENT: ScalaElementType = new ScalaElementType("named tuple type component")
 
   /** ********************************************************************************** */
   /** ************************************ EXPRESSIONS ********************************* */
@@ -221,6 +223,7 @@ object ScalaElementType {
   val QUOTED_BLOCK: ScExpressionElementType = new ScExpressionElementType("quoted block")
   val QUOTED_TYPE: ScExpressionElementType = new ScExpressionElementType("quoted type")
   val TUPLE: ScExpressionElementType = new ScExpressionElementType("Tuple")
+  val NAMED_TUPLE: ScExpressionElementType = new ScExpressionElementType("Named Tuple")
   val UNIT_EXPR: ScExpressionElementType = new ScExpressionElementType("unit expression")
   val CONSTR_BLOCK_EXPR: ScExpressionElementType = new ScExpressionElementType("constructor block expression")
   val SELF_INVOCATION: ScExpressionElementType = new ScExpressionElementType("self invocation")
@@ -263,6 +266,7 @@ object ScalaElementType {
   val ARG_EXPRS: ScalaElementType = new ScalaElementType("arguments of function")
   //Not only String, but quasiquote too
   val INTERPOLATED_PREFIX_PATTERN_REFERENCE: ScalaElementType = new ScalaElementType("Interpolated Prefix Pattern Reference")
+  val NAMED_TUPLE_COMPONENT: ScalaElementType = new ScalaElementType("named tuple component")
 
   /** ********************************************************************************** */
   /** ************************************ PATTERNS ************************************ */
@@ -284,6 +288,8 @@ object ScalaElementType {
   val PATTERN_IN_PARENTHESIS: ScalaElementType = new ScalaElementType("pattern in parenthesis")
   val GIVEN_PATTERN: ScalaElementType = new ScalaElementType("given pattern")
   val SCALA3_TYPED_PATTERN: ScalaElementType = new ScalaElementType("Scala 3 Typed Pattern")
+  val NAMED_TUPLE_PATTERN: ScalaElementType = new ScalaElementType("named tuple pattern")
+  val NAMED_TUPLE_PATTERN_COMPONENT: ScalaElementType = new ScalaElementType("named tuple pattern component")
 
   /** ************************************ TYPE PATTERNS ******************************* */
 

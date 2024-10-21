@@ -105,18 +105,49 @@ object SimpleExpr extends ParsingRule {
             newMarker = simpleMarker.precede
             simpleMarker.done(ScalaElementType.UNIT_EXPR)
           case _ =>
-            if (!Expr()) {
+            val namedTupleSupported = builder.features.`named tuples`
+            val isNamedTuple = namedTupleSupported && builder.lookAhead(tIDENTIFIER, tASSIGN)
+
+            def exprOrNamedTupleComponent(): Boolean = {
+              val namedTupleComponentMarker = builder.mark()
+              var hasNamedTupleContent = false
+              if (isNamedTuple) {
+                if (builder.lookAhead(tIDENTIFIER, tASSIGN)) {
+                  hasNamedTupleContent = true
+                  builder.advanceLexer()
+                  builder.advanceLexer()
+                } else if (builder.getTokenType == tASSIGN) {
+                  hasNamedTupleContent = true
+                  builder.error(ErrMsg("identifier.expected"))
+                  builder.advanceLexer()
+                } else {
+                  builder.error(ErrMsg("identifier.expected"))
+                }
+              }
+
+              val parsedExpr = Expr()
+
+              if (isNamedTuple && (hasNamedTupleContent || parsedExpr)) {
+                namedTupleComponentMarker.done(ScalaElementType.NAMED_TUPLE_COMPONENT)
+              } else {
+                namedTupleComponentMarker.drop()
+              }
+
+              hasNamedTupleContent || parsedExpr
+            }
+
+            if (!exprOrNamedTupleComponent()) {
               builder error ErrMsg("rparenthesis.expected")
               builder.restoreNewlinesState()
               newMarker = simpleMarker.precede
               simpleMarker.done(ScalaElementType.UNIT_EXPR)
             } else {
-              var isTuple = false
+              var isTuple = isNamedTuple
               while (builder.getTokenType == tCOMMA &&
                 !builder.lookAhead(tCOMMA, tRPARENTHESIS)) {
                 isTuple = true
                 builder.advanceLexer()
-                if (!Expr()) {
+                if (!exprOrNamedTupleComponent()) {
                   builder.wrongExpressionError()
                 }
               }
@@ -131,7 +162,11 @@ object SimpleExpr extends ParsingRule {
               }
               builder.restoreNewlinesState()
               newMarker = simpleMarker.precede
-              simpleMarker.done(if (isTuple) ScalaElementType.TUPLE else ScalaElementType.PARENT_EXPR)
+              simpleMarker.done(
+                if (isNamedTuple) ScalaElementType.NAMED_TUPLE
+                else if (isTuple) ScalaElementType.TUPLE
+                else ScalaElementType.PARENT_EXPR
+              )
             }
         }
       case _ =>
