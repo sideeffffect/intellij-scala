@@ -55,13 +55,7 @@ class ToggleTypeAnnotation extends AbstractTypeAnnotationIntention {
       true
     }
 
-    override def patternWithoutType(pattern: ScBindingPattern): Boolean = {
-      setText(message("intention.type.annotation.pattern.add.text"))
-
-      true
-    }
-
-    override def wildcardPatternWithoutType(pattern: ScWildcardPattern): Boolean = {
+    override def patternWithoutType(pattern: ScPattern): Boolean = {
       setText(message("intention.type.annotation.pattern.add.text"))
 
       true

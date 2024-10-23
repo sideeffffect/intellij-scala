@@ -8,7 +8,7 @@ import com.intellij.psi.{PsiElement, PsiMethod}
 import org.jetbrains.plugins.scala.codeInsight.intention.types.AddOnlyStrategy._
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
-import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScBindingPattern, ScTypedPatternLike, ScWildcardPattern}
+import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScBindingPattern, ScPattern, ScReferencePattern, ScTypedPatternLike, ScWildcardPattern}
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.ScTypeElement
 import org.jetbrains.plugins.scala.lang.psi.api.expr._
 import org.jetbrains.plugins.scala.lang.psi.api.statements._
@@ -56,12 +56,7 @@ class AddOnlyStrategy(editor: Option[Editor] = None) extends Strategy {
     true
   }
 
-  override def patternWithoutType(pattern: ScBindingPattern): Boolean = {
-    addTypeAnnotation(pattern.expectedType, pattern.getParent, pattern)
-    true
-  }
-
-  override def wildcardPatternWithoutType(pattern: ScWildcardPattern): Boolean = {
+  override def patternWithoutType(pattern: ScPattern): Boolean = {
     addTypeAnnotation(pattern.expectedType, pattern.getParent, pattern)
     true
   }
@@ -272,6 +267,10 @@ object AddOnlyStrategy {
         }
         val e = createScalaFileFromText(s"(_: ${annotation.getText})", underscore).getFirstChild.asInstanceOf[ScParenthesisedExpr]
         underscore.replace(if (needsParentheses) e else e.innerElement.get)
+
+      case pattern@(_: ScWildcardPattern | _: ScReferencePattern) =>
+        val patternWithType = createPatternFromText(s"${pattern.getText}: ${annotation.getText}", pattern)
+        pattern.replace(patternWithType)
 
       case _ =>
         anchor.appendSiblings(createColon, createWhitespace, annotation).last
