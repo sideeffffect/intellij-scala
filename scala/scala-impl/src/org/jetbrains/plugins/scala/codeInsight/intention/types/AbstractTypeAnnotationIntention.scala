@@ -39,15 +39,14 @@ object AbstractTypeAnnotationIntention {
     val caretOffset = editor.getCaretModel.getOffset
     val adjusted1 = ScalaPsiUtil.adjustElementAtOffset(element, caretOffset)
 
-    // 1. Handle the case when the caret is just after the underscore and before the dot:
-    // In this case, when there is no whitespace, the element at caret will be `.`
-    // Example: Seq(1, 2).map(_<caret>.toString)
-    //
-    // 2. Handle the case when the caret is just before `)`
-    // In this case, when there is no whitespace, the element at caret will be `)`
-    // Example: Seq(1, 2).map((_: Int<caret>).toString)
+    // Handle some cases when the caret is located after identifier/underscore
+    // and before some "separator" tokens: (dot, coma, parentheses).
+    // In this case this next element will be selected, and we need to adjust it to the previous leaf.
+    // Example 1: Seq(1, 2).map(_<caret>.toString)
+    // Example 2: Seq(1, 2).map((_: Int<caret>).toString)
+    // Example 3: case Some(SomeCaseClass(_<caret>, bar, _))
     val adjusted2 = adjusted1.elementType match {
-      case ScalaTokenTypes.tDOT | ScalaTokenTypes.tRPARENTHESIS =>
+      case ScalaTokenTypes.tCOMMA | ScalaTokenTypes.tDOT | ScalaTokenTypes.tRPARENTHESIS =>
         adjusted1.getPrevNonEmptyLeaf
       case _ =>
         adjusted1
@@ -147,14 +146,22 @@ object AbstractTypeAnnotationIntention {
         case p@ScTypedPatternLike(_) =>
           return strategy.patternWithType(p)
         case p: ScReferencePattern =>
-          return strategy.patternWithoutType(p)
+          p.getParent match {
+            case typed: ScTypedPatternLike =>
+              return strategy.patternWithType(typed)
+            case _ =>
+              return strategy.patternWithoutType(p)
+          }
+        case w: ScWildcardPattern =>
+          w.getParent match {
+            case typed: ScTypedPatternLike =>
+              return strategy.patternWithType(typed)
+            case _ =>
+              return strategy.patternWithoutType(w)
+          }
         case _ =>
       }
     }
-    for (pattern <- element.parentsInFile.findByType[ScWildcardPattern]) {
-      return strategy.wildcardPatternWithoutType(pattern)
-    }
-
     false
   }
 }
