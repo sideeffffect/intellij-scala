@@ -13,8 +13,8 @@ import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettin
 import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaRecursiveElementVisitor
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns._
-import org.jetbrains.plugins.scala.lang.psi.api.base.types.ScTupleTypeElement
-import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScArgumentExprList, ScBlockExpr, ScTuple, ScTypedExpression}
+import org.jetbrains.plugins.scala.lang.psi.api.base.types.{ScNamedTupleTypeElement, ScTupleTypeElement}
+import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScArgumentExprList, ScBlockExpr, ScNamedTuple, ScTuple, ScTypedExpression}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.{ScParameterClause, ScTypeParamClause}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.imports.ScImportExpr
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
@@ -87,8 +87,16 @@ private class ScalaTrailingCommaVisitor(settings: CodeStyleSettings) extends Sca
     doVisit(tuple, super.visitTuple, TRAILING_COMMA_TUPLE_ENABLED)(_.exprs.lastOption)
   }
 
+  override def visitNamedTuple(tuple: ScNamedTuple): Unit = {
+    doVisit(tuple, super.visitNamedTuple, TRAILING_COMMA_NAMED_TUPLE_ENABLED)(_.components.lastOption)
+  }
+
   override def visitTupleTypeElement(tuple: ScTupleTypeElement): Unit = {
     doVisit(tuple, super.visitTupleTypeElement, TRAILING_COMMA_TUPLE_TYPE_ENABLED)(_.components.lastOption)
+  }
+
+  override def visitNamedTupleTypeElement(tuple: ScNamedTupleTypeElement): Unit = {
+    doVisit(tuple, super.visitNamedTupleTypeElement, TRAILING_COMMA_NAMED_TUPLE_TYPE_ENABLED)(_.components.lastOption)
   }
 
   override def visitPattern(pat: ScPattern): Unit = {
@@ -97,6 +105,10 @@ private class ScalaTrailingCommaVisitor(settings: CodeStyleSettings) extends Sca
       case tuple: ScTuplePattern =>
         doVisit(tuple, (_: ScTuplePattern) => (), TRAILING_COMMA_PATTERN_ARG_LIST_ENABLED) {
           _.patternList.flatMap(_.patterns.lastOption)
+        }
+      case tuple: ScNamedTuplePattern =>
+        doVisit(tuple, (_: ScNamedTuplePattern) => (), TRAILING_COMMA_NAMED_TUPLE_PATTERN_ENABLED) {
+          _.components.lastOption
         }
       case _ =>
     }
