@@ -5,7 +5,7 @@ import org.jetbrains.plugins.scala.extensions.StringExt
 import org.jetbrains.plugins.scala.lang.formatter.AbstractScalaFormatterTestBase
 
 abstract class Scala3FormatterBaseTest extends AbstractScalaFormatterTestBase {
-  override protected def version: ScalaVersion = LatestScalaVersions.Scala_3
+  override protected def version: ScalaVersion = LatestScalaVersions.Scala_3_5
 
   protected def doTextTestWithExtraSpaces(before0: String): Unit =
     doTextTestWithExtraSpaces(before0, before0)
