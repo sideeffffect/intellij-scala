@@ -45,7 +45,7 @@ class ScPrefixExprImpl(node: ASTNode) extends MethodInvocationImpl(node) with Sc
     case value: NumericLiteralImplBase.Value[_] =>
       name match {
         case "unary_+" => Some(literal)
-        case "unary_-" => Some(ScLiteralType(value.negate))
+        case "unary_-" => Some(ScLiteralType(value.negate, psiElement = literal.psiElement.orNull))
         case _ => None
       }
     case _ => None
