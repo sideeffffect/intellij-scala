@@ -81,7 +81,7 @@ trait ExpressionTransformation { this: ScalaDfaControlFlowBuilder =>
   }
 
   private def isUnsupportedPureExpressionType(expression: ScExpression): Boolean = {
-    expression.is[ScTuple, ScThisReference, ScSuperReference]
+    expression.is[ScTuple, ScNamedTuple, ScThisReference, ScSuperReference]
   }
 
   private def isUnsupportedImpureExpressionType(expression: ScExpression): Boolean = {
