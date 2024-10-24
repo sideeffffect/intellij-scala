@@ -320,6 +320,10 @@ trait ScalaTypePresentation extends TypePresentation {
           case Seq(head) => (if (ScalaApplicationSettings.PRECISE_TEXT && options.canonicalForm) "_root_.scala." else "") + s"Tuple1[${innerTypeText(head)}]" // SCL-21183
           case _ => typesText(comps)
         }
+      case nt@NamedTupleType(comps) if !ScalaApplicationSettings.PRECISE_TEXT && NamedTupleType.isUnaliasedNamedTupleType(nt) =>
+        comps
+          .map { case (name, ty) => s"${NamedTupleType.NameType.from(name).getOrElse(name.presentableText)}: ${innerTypeText(ty)}" }
+          .commaSeparated(model = Model.Parentheses)
       case ScDesignatorType(element) =>
         val flag = element match {
           case _: ScObject | _: ScReferencePattern | _: ScParameter => true
