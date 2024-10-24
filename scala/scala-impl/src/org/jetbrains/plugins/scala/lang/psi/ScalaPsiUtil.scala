@@ -825,14 +825,14 @@ object ScalaPsiUtil {
   }
 
   @tailrec
-  def newLinesEnabled(element: PsiElement): Boolean = {
+  private def newLinesEnabled(element: PsiElement): Boolean = {
     if (element == null) true
     else {
       element.getParent match {
         case block: ScBlock if block.hasRBrace => true
         case _: ScMatch | _: ScalaFile | null => true
         case argList: ScArgumentExprList => !argList.isArgsInParens
-        case _: ScParenthesisedExpr | _: ScTuple |
+        case _: ScParenthesisedExpr | _: ScTuple | _: ScNamedTuple |
              _: ScTypeArgs | _: ScPatternArgumentList |
              _: ScParameterClause | _: ScTypeParamClause => false
         case caseClause: ScCaseClause =>
@@ -850,11 +850,11 @@ object ScalaPsiUtil {
 
   /*
   ******** any subexpression of these does not need parentheses **********
-  * ScTuple, ScBlock, ScXmlExpr
+  * ScTuple, ScNamedTuple, ScBlock, ScXmlExpr
   *
   ******** do not need parentheses with any parent ***************
   * ScReferenceExpression, ScMethodCall,
-  * ScGenericCall, ScLiteral, ScTuple,
+  * ScGenericCall, ScLiteral, ScTuple, ScNamedTuple
   * ScXmlExpr, ScParenthesisedExpr, ScUnitExpr
   * ScThisReference, ScSuperReference
   *
@@ -993,7 +993,7 @@ object ScalaPsiUtil {
         case (_: ScGuard, _: ScMatch) => true
         case _ if !parent.is[ScExpression] => false
         case _ if expr.textMatches("_") => false
-        case (_: ScTuple | _: ScBlock | _: ScXmlExpr, _) => false
+        case (_: ScTuple | _: ScNamedTuple | _: ScBlock | _: ScXmlExpr, _) => false
         case (infix: ScInfixExpr, call: ScMethodCall) if infix.left == from && call.args.isColonArgs => true
         case (infix: ScInfixExpr, _: ScTuple) => tupleInInfixNeedParentheses(infix, from)
         case (_: ScSugarCallExpr |
@@ -1001,7 +1001,7 @@ object ScalaPsiUtil {
               _: ScTypedExpression, elem: PsiElement)
           if from.isInstanceOf[ScParenthesizedElement] && ScUnderScoreSectionUtil.isUnderscoreFunction(elem) => true
         case (_, _: ScReferenceExpression | _: ScMethodCall |
-                 _: ScGenericCall | _: ScLiteral | _: ScTuple |
+                 _: ScGenericCall | _: ScLiteral | _: ScTuple | _: ScNamedTuple |
                  _: ScXmlExpr | _: ScParenthesisedExpr | _: ScUnitExpr |
                  _: ScThisReference | _: ScSuperReference) => false
         case (_: ScMethodCall | _: ScUnderscoreSection, _) => true

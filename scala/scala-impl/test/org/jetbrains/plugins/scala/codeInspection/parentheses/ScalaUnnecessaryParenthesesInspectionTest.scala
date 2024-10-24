@@ -594,7 +594,7 @@ class ScalaUnnecessaryParenthesesInspectionTest_Scala2 extends ScalaUnnecessaryP
 
 class ScalaUnnecessaryParenthesesInspectionTest_Scala3 extends ScalaUnnecessaryParenthesesInspectionTestBase {
 
-  override protected def supportedIn(version: ScalaVersion): Boolean = version >= ScalaVersion.Latest.Scala_3_0
+  override protected def supportedIn(version: ScalaVersion): Boolean = version >= ScalaVersion.Latest.Scala_3_5
 
   def testFor(): Unit = {
     val text = "(for (x <- 0 to 2) println())"
@@ -658,5 +658,26 @@ class ScalaUnnecessaryParenthesesInspectionTest_Scala3 extends ScalaUnnecessaryP
     checkTextHasNoErrors("val s@(_: (String && Int)) = null")
     checkTextHasErrors(s"val s: $START(String && Int)$END = null")
     checkTextHasErrors(s"type X[A] = A match { case $START(Int || Float)$END => Int }")
+  }
+
+  def testNamedTuple(): Unit = {
+    checkTextHasNoErrors("(x = 1, y = 2)")
+
+    checkTextHasErrors(s"$START((x = 1))$END")
+    checkTextHasErrors(s"(x = $START(1)$END)")
+  }
+
+  def testNamedTupleType(): Unit = {
+    checkTextHasNoErrors("val x: (x: 1, y: 2) = ???")
+
+    checkTextHasErrors(s"val x: $START((x: 1, y: 2))$END = ???")
+    checkTextHasErrors(s"val x: (x: 1, y: $START(Int)$END) = ???")
+  }
+
+  def testNamedTuplePattern(): Unit = {
+    checkTextHasNoErrors("val (x = _, y = _) = ???")
+
+    checkTextHasErrors(s"val $START((x = _, y = _))$END = ???")
+    checkTextHasErrors(s"val (x = _, y = $START(_)$END) = ???")
   }
 }
