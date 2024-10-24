@@ -103,6 +103,7 @@ object SideEffectsUtil {
           })
         }
       case t: ScTuple => !checkSubExpression || t.exprs.forall(hasNoSideEffectsInner)
+      case nt: ScNamedTuple => !checkSubExpression || nt.components.forall(_.expr.forall(hasNoSideEffectsInner))
       case inf: ScInfixExpr if inf.isAssignmentOperator => false
       case call@ScSugarCallExpr(baseExpr, operation, args) =>
         val checkOperation = operation match {

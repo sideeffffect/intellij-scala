@@ -11,6 +11,7 @@ abstract class UnusedExpressionInspectionTestBase extends ScalaInspectionTestBas
 }
 
 class UnusedExpressionInspectionTest extends UnusedExpressionInspectionTestBase {
+  override def supportedIn(version: ScalaVersion): Boolean = version >= ScalaVersion.Latest.Scala_3_5
 
   override protected val description =
     ScalaInspectionBundle.message("unused.expression.no.side.effects")
@@ -25,10 +26,18 @@ class UnusedExpressionInspectionTest extends UnusedExpressionInspectionTestBase 
   }
 
   def testTuple(): Unit = checkTextHasError {
-    s"""def foo(): Int = {
+    s"""def foo(): (Int, Int) = {
        |    var x = 0
        |    $START(0, 2)$END
-       |    0
+       |    (1, x)
+       |}""".stripMargin
+  }
+
+  def testNamedTuple(): Unit = checkTextHasError {
+    s"""def foo(): (a: Int, b: Int) = {
+       |    var x = 0
+       |    $START(x = 0, y = 2)$END
+       |    (a = 0, b = x)
        |}""".stripMargin
   }
 
@@ -479,6 +488,9 @@ class UnusedExpressionInspectionTest extends UnusedExpressionInspectionTestBase 
        |  $START(3, 4)$END
        |  $START(3,${END}f$START)$END
        |  $START(${END}f$START, ${END}f$START)$END
+       |  $START(a = 3, b = 4)$END
+       |  $START(a = 3, b = ${END}f$START)$END
+       |  $START(a = ${END}f$START, b = ${END}f$START)$END
        |}
        |""".stripMargin
   )
