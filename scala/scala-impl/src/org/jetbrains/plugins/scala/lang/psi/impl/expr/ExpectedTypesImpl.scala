@@ -444,6 +444,28 @@ class ExpectedTypesImpl extends ExpectedTypes {
           for (tp: ScType <- tuple.expectedTypes()) addType(tp)
         }
         result.result()
+      case comp: ScNamedTupleExprComponent =>
+        val tuple = comp.namedTuple
+        val result = Array.newBuilder[ParameterType]
+        val components = tuple.components
+        val index = components.indexOf(comp)
+        @tailrec
+        def addType(aType: ScType): Unit = {
+          aType match {
+            case _: ScAbstractType => addType(aType.removeAbstracts)
+            case NamedTupleType(expectedComps) if expectedComps.length == components.length =>
+              expectedComps(index) match {
+                case (NamedTupleType.NameType(expectedName), expectedType) if expectedName == comp.name =>
+                  result += expectedType -> None
+                case _ =>
+              }
+            case _ =>
+          }
+        }
+        if (index >= 0) {
+          for (tp: ScType <- tuple.expectedTypes()) addType(tp)
+        }
+        result.result()
       case infix@ScInfixExpr.withAssoc(_, _, `sameInContext`) if !expr.is[ScTuple] =>
         expr match {
           case p: ScParenthesisedExpr if p.innerElement.isEmpty => return Array.empty

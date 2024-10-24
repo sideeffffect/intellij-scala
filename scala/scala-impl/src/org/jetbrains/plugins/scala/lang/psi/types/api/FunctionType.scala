@@ -1,9 +1,13 @@
 package org.jetbrains.plugins.scala.lang.psi.types.api
 
+import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.scala.lang.psi.ElementScope
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScTypeAliasDefinition
-import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScClass, ScTrait, ScTypeDefinition}
-import org.jetbrains.plugins.scala.lang.psi.types.{AliasType, ScParameterizedType, ScType, ScalaType, api}
+import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScClass, ScMember, ScTrait, ScTypeDefinition}
+import org.jetbrains.plugins.scala.lang.psi.impl.base.ScStringLiteralImpl
+import org.jetbrains.plugins.scala.lang.psi.types.{AliasType, ScLiteralType, ScParameterizedType, ScType, ScalaType, api}
+import org.jetbrains.plugins.scala.extensions._
+import org.jetbrains.plugins.scala.project.ProjectContext
 
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
@@ -42,9 +46,10 @@ object FunctionTypeFactory {
   }
 
   private[this] def extractQualifiedName(`type`: ScType): Option[String] =
-    `type`.extractClass.collect {
-      case definition: ScTypeDefinition => definition
-    }.flatMap(definition => Option(definition.qualifiedName))
+    `type`
+      .extractDesignated(expandAliases = true)
+      .collect { case member: ScMember => member }
+      .flatMap(member => member.qualifiedNameOpt)
 
   private[this] object AliasLowerBound {
 
@@ -105,5 +110,57 @@ object TupleType extends FunctionTypeFactory[ScClass, Seq[ScType]] {
 
   override protected def unapplyCollector: PartialFunction[Seq[ScType], Seq[ScType]] = {
     case types => types
+  }
+}
+
+object NamedTupleType extends FunctionTypeFactory[ScClass, Seq[(ScType, ScType)]] {
+  override val TypeName = "scala.NamedTuple.NamedTuple"
+
+//  try not to use this because it doesn't preserve the psiElement in ScLiteralType
+//
+//  def create(elements: Seq[(String, ScType)])(implicit scope: ElementScope): ValueType = {
+//    apply(elements.map {
+//      case (name, ty) =>
+//        val nameType = ScLiteralType(ScStringLiteralImpl.Value(name))(ty.projectContext)
+//        (nameType, ty)
+//    })
+//  }
+
+  override def apply(elements: Seq[(ScType, ScType)])
+                    (implicit scope: ElementScope): ValueType = {
+    val (names, types) = elements.unzip
+    scope.scalaNamedTupleType match {
+      case Some(x) => ScParameterizedType(ScalaType.designator(x), Seq(TupleType(names), TupleType(types))).asInstanceOf[ValueType]
+      case None => api.Nothing
+    }
+
+  }
+
+  override protected def unapplyCollector: PartialFunction[Seq[ScType], Seq[(ScType, ScType)]] = {
+    case Seq(TupleType(names), TupleType(types)) =>
+      names.zip(types)
+  }
+
+  def isUnaliasedNamedTupleType(typ: ScType): Boolean =
+    typ.aliasType.exists(_.ta.qualifiedNameOpt.contains(TypeName))
+
+  object NameType {
+    def apply(name: String, psiElement: PsiElement)(implicit context: ProjectContext): ScType =
+      ScLiteralType(ScStringLiteralImpl.Value(name), psiElement = psiElement)(context.project)
+
+    def from(scLiteralType: ScLiteralType): Option[String] = {
+      scLiteralType.value match {
+        case ScStringLiteralImpl.Value(string) => Some(string)
+        case _ => None
+      }
+    }
+
+    def unapply(scLiteralType: ScLiteralType): Option[String] = from(scLiteralType)
+
+    def from(ty: ScType): Option[String] =
+      ty match {
+        case NameType(name) => Some(name)
+        case _ => None
+      }
   }
 }
