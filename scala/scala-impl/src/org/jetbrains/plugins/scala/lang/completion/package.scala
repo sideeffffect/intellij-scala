@@ -258,7 +258,7 @@ package object completion {
 
     // Copy the compiler type (see ScExpression.getTypeWithoutImplicits)
     val settings = ScalaProjectSettings.getInstance(originalFile.getProject)
-    if (settings.isCompilerHighlightingScala3 && settings.isUseCompilerTypes) {
+    if (settings.isCompilerHighlightingScala3 && settings.isUseCompilerTypes && originalFile.isScala3File) {
       // In principle, can be not just for method calls
       val call1 = Option(placeInOriginalFile).flatMap { e =>
         e.parentsInFile.findByType[ScMethodCall].filter(_.getInvokedExpr.elements.contains(e))
