@@ -125,6 +125,22 @@ object ScPattern {
             }
           case _ => None
         }
+        case comp: ScNamedTuplePatternComponent =>
+          val namedTuplePattern = comp.namedTuplePattern
+          @tailrec
+          def handleNamedTupleSubpatternExpectedType(tupleExpectedType: ScType): Option[ScType] =
+            tupleExpectedType match {
+              case NamedTupleType(components) =>
+                val idx = namedTuplePattern.components.indexWhere(_ == comp)
+                components.lift(idx).map(_._2)
+              case ex: ScExistentialType =>
+                val simplified = ex.simplify()
+                if (simplified != ex) handleNamedTupleSubpatternExpectedType(simplified)
+                else                  None
+              case _ =>
+                None
+            }
+          namedTuplePattern.expectedType.flatMap(handleNamedTupleSubpatternExpectedType)
         case clause: ScCaseClause => clause.getContext /*clauses*/ .getContext match {
           case matchStat: ScMatch => matchStat.expression match {
             case Some(e) => Some(e.`type`().getOrAny)

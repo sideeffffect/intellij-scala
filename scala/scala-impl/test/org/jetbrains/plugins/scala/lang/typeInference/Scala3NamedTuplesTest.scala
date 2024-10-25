@@ -47,4 +47,13 @@ class Scala3NamedTuplesTest extends TypeInferenceTestBase {
        |//(x: Int, y: String)
        |""".stripMargin
   )
+
+  def testComponentPatternInference(): Unit = doTest(
+    s"""
+       |val (x = value) = (x = 1)
+       |${START}value$END
+       |
+       |//Int
+       |""".stripMargin
+  )
 }
