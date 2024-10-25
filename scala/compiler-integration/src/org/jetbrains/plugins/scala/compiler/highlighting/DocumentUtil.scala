@@ -4,10 +4,8 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.{VirtualFile, VirtualFileManager}
-import org.jetbrains.plugins.scala.util.{CanonicalPath, CompilationId, DocumentVersion}
+import org.jetbrains.plugins.scala.util.{CanonicalPath, DocumentVersion}
 
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 
 private object DocumentUtil {
@@ -21,8 +19,7 @@ private object DocumentUtil {
 
   def stillValid(documentVersions: Map[CanonicalPath, Long] with Serializable): Boolean =
     documentVersions.forall { case (CanonicalPath(path), version) =>
-      val url = URLDecoder.decode(Path.of(path).toUri.toString, StandardCharsets.UTF_8)
-      val virtualFile = VirtualFileManager.getInstance().findFileByUrl(url)
+      val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(Path.of(path))
       if (virtualFile eq null) false
       else {
         val document = FileDocumentManager.getInstance().getCachedDocument(virtualFile)
