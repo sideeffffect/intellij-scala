@@ -20,6 +20,7 @@ import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.annotations.{Nls, Nullable}
 import org.jetbrains.jps.incremental.scala.Client.PosInfo
 import org.jetbrains.plugins.scala.annotator.UnresolvedReferenceFixProvider
+import org.jetbrains.plugins.scala.caches.ModTracker.anyScalaPsiChange
 import org.jetbrains.plugins.scala.codeInsight.implicits.ImplicitHints
 import org.jetbrains.plugins.scala.codeInspection.ScalaInspectionBundle
 import org.jetbrains.plugins.scala.codeInspection.declarationRedundancy.ScalaOptimizeImportsFix
@@ -124,6 +125,8 @@ private final class ExternalHighlightersService(project: Project) { self =>
             expressions.foreach { e =>
               ScalaPsiManager.instance(project).clearOnScalaElementChange(e)
             }
+            // Update usages (see ScalaFileImpl.subtreeChanged, Search.Method.getUsages)
+            anyScalaPsiChange.incModificationCount()
             // Also update hints (type hints, implicit hints, x-ray mode, etc.)
             ImplicitHints.updateInAllEditors()
           }
