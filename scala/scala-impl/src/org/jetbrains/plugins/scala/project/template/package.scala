@@ -9,8 +9,6 @@ import org.jetbrains.plugins.scala.extensions.IterableOnceExt
 
 import java.awt.Container
 import java.io._
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 import javax.swing.JLabel
 import scala.util.Using
@@ -81,10 +79,8 @@ package object template {
 
     def toLibraryRootURL: String = VfsUtil.getUrlForLibraryRoot(delegate)
 
-    def toVirtualFile: Option[VirtualFile] = {
-      val url = URLDecoder.decode(delegate.toPath.toUri.toString, StandardCharsets.UTF_8.name())
-      Option(VirtualFileManager.getInstance.findFileByUrl(url))
-    }
+    def toVirtualFile: Option[VirtualFile] =
+      Option(VirtualFileManager.getInstance().findFileByNioPath(delegate.toPath))
   }
 
   /**
