@@ -91,7 +91,7 @@ abstract class ScalaCompilerHighlightingTestBase
           }
       }
     }
-    rec(40)
+    rec(20)
   }
 
   protected def fetchHighlightInfos(virtualFile: VirtualFile): Seq[HighlightInfo] = invokeAndWait {
