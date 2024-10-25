@@ -47,6 +47,7 @@ private object CompilerPlugin:
         val tpe = tree.expansion.tpe
         val s = printer.toText(tpe).mkString(Int.MaxValue, false)
           .replace("<root>.this.", "_root_.")
+          .replace("<empty>.this.", "_root_.")
           .replace("$.this.", ".")
         // Echo doesn't require the -verbose option
         // Use -Yshow-suppressed-errors to print the type even if there's an error at the same position (see HideNonSensicalMessages)
