@@ -751,6 +751,15 @@ object ScalaRefactoringUtil {
           if (expr != exprs.last) builder.append(", ")
         }
         builder.append(")")
+      case ScNamedTuple(components) =>
+        builder.append("(")
+        for (comp <- components) {
+          comp.name.foreach(builder.append)
+          builder.append(" = ")
+          comp.expr.foreach(expr => builder.append(getShortText(expr)))
+          if (comp != components.last) builder.append(", ")
+        }
+        builder.append(")")
       case t: ScTypedExpression =>
         builder.append(getShortText(t.expr))
         builder.append(" : ")
