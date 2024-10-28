@@ -19,7 +19,7 @@ import org.junit.experimental.categories.Category
 class TypeDiffTest extends ScalaFixtureTestCase {
   // TODO test separation of matched elements, such as [ or ]
 
-  override protected def supportedIn(version: ScalaVersion): Boolean = version >= LatestScalaVersions.Scala_2_13
+  override protected def supportedIn(version: ScalaVersion): Boolean = version >= LatestScalaVersions.Scala_3_5
 
   /* TODO:
       compound types (comparison)
@@ -320,6 +320,76 @@ class TypeDiffTest extends ScalaFixtureTestCase {
       "~A~", "~(A, A)~"
     )
   }
+
+  def testNamedTupleParsing(): Unit = {
+    assertParsedAs(
+      "class A; class B",
+      "(a: A, b: B)", "<(<<a: <A>>, <b: <B>>>)>")
+  }
+
+
+  def testNamedTuple(): Unit = {
+//    assertDiffsAre(
+//      "class A; class B",
+//      "(a: A, b: B)", "(a: A, b: B)"
+//    )
+//    assertDiffsAre(
+//      "class A; class B; class C",
+//      "(a: ~A~, b: B)", "(a: ~C~, b: B)"
+//    )
+//    assertDiffsAre(
+//      "class A; class B; class C",
+//      "(a: A, b: ~B~)", "(a: A, b: ~C~)"
+//    )
+
+    // Covariance
+    assertDiffsAre(
+      "class A; class B; class C extends A",
+      "(a: A, b: B)", "(a: C, b: B)"
+    )
+    assertDiffsAre(
+      "class A; class B; class C extends A",
+      "(a: ~C~, b: B)", "(a: ~A~, b: B)"
+    )
+
+    // Argument count
+    assertDiffsAre(
+      "class A; class B; class C",
+      "~(a: A, b: B)~", "~(a: A, b: B, c: C)~" // TODO parse nested types? (create matching placeholders?)
+    )
+    assertDiffsAre(
+      "class A; class B; class C",
+      "~(a: A, b: B, c: C)~", "~(a: A, b: B)~"
+    )
+
+    // Nesting
+    assertDiffsAre(
+      "class A; class B; class C",
+      "(a1: (a: A, b: ~B~), a2: A)", "(a1: (a: A, b: ~C~), a2: A)"
+    )
+    assertDiffsAre(
+      "class A; class B; class C",
+      "(a1: A, a2: (a: A, b: ~B~))", "(a1: A, a2: (a: A, b: ~C~))"
+    )
+
+    // Not tuple
+    assertDiffsAre(
+      "class A; class B; class C",
+      "~A~", "~(a: A, b: A)~"
+    )
+
+    // name difference
+    assertDiffsAre(
+      "class A; class B;",
+      "(~a~: A, b: B)", "(~x~: A, b: B)"
+    )
+    assertDiffsAre(
+      "class A; class B; class C",
+      "(~a~: ~C~, b: B)", "(~x~: ~A~, b: B)"
+    )
+  }
+
+
 
   def testInfixParsing(): Unit = {
     assertParsedAs(
@@ -644,5 +714,5 @@ class TypeDiffTest extends ScalaFixtureTestCase {
   }
 
   private def parseText(@Language("Scala") s: String): ScalaFile =
-    PsiFileFactory.getInstance(getProject).createFileFromText("foo.scala", ScalaFileType.INSTANCE, s).asInstanceOf[ScalaFile]
+    PsiFileFactory.getInstance(getProject).createFileFromText("foo.scala", Scala3Language.INSTANCE, s).asInstanceOf[ScalaFile]
 }
