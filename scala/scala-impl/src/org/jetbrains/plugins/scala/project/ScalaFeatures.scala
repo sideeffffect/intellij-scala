@@ -215,7 +215,7 @@ object ScalaFeatures {
   }
 
   val default: SerializableScalaFeatures = onlyByVersion(ScalaVersion.Latest.Scala_2_13)
-  private val defaultScala3: SerializableScalaFeatures = onlyByVersion(ScalaVersion.Latest.Scala_3)
+  val defaultScala3: SerializableScalaFeatures = onlyByVersion(ScalaVersion.Latest.Scala_3)
 
   val `-Xsource:3 in 2.12.14 or 2.13.6`: SerializableScalaFeatures = default.copy(
     version = ScalaVersion.Latest.Scala_2_13.withMinor(6),

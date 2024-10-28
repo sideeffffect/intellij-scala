@@ -233,7 +233,7 @@ abstract class BaseProcessor(val kinds: Set[ResolveTargets.Value])
         implicit val elementScope: ElementScope = place.elementScope
         processTypeImpl(j.getParameterizedType.getOrElse(return true), place, state)
       case p@ParameterizedType(designator, typeArgs) =>
-        designator match {
+        val cont = designator match {
           case tpt: TypeParameterType =>
             if (recState.visitedTypeParameter.contains(tpt)) return true
             val newState = state.withSubstitutor(ScSubstitutor(p))
@@ -244,12 +244,16 @@ abstract class BaseProcessor(val kinds: Set[ResolveTargets.Value])
               else                               p.substitutor(ParameterizedType(tpt.upperType, typeArgs))
 
             processTypeImpl(substedType, place, newState)(recState.add(tpt))
-          case _ => p.extractDesignatedType(expandAliases = false) match {
-            case Some((des, subst)) =>
-              processElement(des, subst, place, state)
-            case None => true
-          }
+          case _ =>
+            p.extractDesignatedType(expandAliases = false) match {
+              case Some((des, subst)) =>
+                processElement(des, subst, place, state)
+              case None =>
+                true
+            }
         }
+
+        cont && processNamedTuple(p, execute(_, state))
       case proj: ScProjectionType =>
         val withActual = new ScProjectionType.withActual(updateWithProjectionSubst)
         proj match {
