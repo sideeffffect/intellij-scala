@@ -13,7 +13,8 @@ class ScLiteralEscaper(val literal: ScStringLiteral) extends ScLiteralEscaperBas
 
     val parser = new ScalaStringParser(
       outSourceOffsets,
-      isRaw = false
+      isRaw = false,
+      noUnicodeEscapesInRawStrings = literal.noUnicodeEscapesInRawStrings
     )
     parser.parse(chars, outChars)
   }

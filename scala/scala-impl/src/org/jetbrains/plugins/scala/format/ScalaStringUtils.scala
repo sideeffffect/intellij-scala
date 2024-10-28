@@ -7,10 +7,13 @@ import org.jetbrains.plugins.scala.util.MultilineStringUtil.MultilineQuotes
 
 import java.lang
 
+/**
+ * @see [[org.jetbrains.plugins.scala.lang.psi.impl.base.literals.escapers.ScalaStringParser]]
+ */
 private object ScalaStringUtils {
 
-  def unescapeStringCharacters(content: String, isRaw: Boolean): String = {
-    val parser = new ScalaStringParser(null, isRaw, exitOnEscapingWrongSymbol = false)
+  def unescapeStringCharacters(content: String, isRaw: Boolean, noUnicodeEscapesInRawStrings: Boolean): String = {
+    val parser = new ScalaStringParser(null, isRaw, noUnicodeEscapesInRawStrings = noUnicodeEscapesInRawStrings, exitOnEscapingWrongSymbol = false)
     val builder = new java.lang.StringBuilder()
     parser.parse(content, builder)
     builder.toString

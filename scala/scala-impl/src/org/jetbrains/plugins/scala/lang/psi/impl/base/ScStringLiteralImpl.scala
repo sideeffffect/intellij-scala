@@ -2,15 +2,14 @@ package org.jetbrains.plugins.scala.lang.psi.impl.base
 
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi._
 import com.intellij.psi.impl.source.tree.LeafElement
 import com.intellij.psi.tree.IElementType
 import org.apache.commons.text.StringEscapeUtils
-import org.jetbrains.plugins.scala.lang.psi.api.base.ScLiteral
 import org.jetbrains.plugins.scala.lang.psi.api.base.literals.ScStringLiteral
+import org.jetbrains.plugins.scala.lang.psi.api.base.{ScInterpolatedStringLiteral, ScLiteral}
 import org.jetbrains.plugins.scala.lang.psi.impl.base.literals.QuotedLiteralImplBase
-import org.jetbrains.plugins.scala.lang.psi.impl.base.literals.escapers.{ScLiteralEscaper, ScLiteralRawEscaper}
+import org.jetbrains.plugins.scala.lang.psi.impl.base.literals.escapers.{ScLiteralEscaper, ScLiteralRawEscaper, ScalaStringParser}
 import org.jetbrains.plugins.scala.lang.psi.types._
 
 // todo: move to "literals" subpackage, but check usages
@@ -29,17 +28,16 @@ class ScStringLiteralImpl(node: ASTNode,
     else if (hasValidClosingQuotes) SingleLineQuote
     else ""
 
-  override protected final def toValue(text: String): String = firstChildElementType match {
-    case `tSTRING` =>
-      try {
-        StringContext.processEscapes(text) // for octal escape sequences
-      } catch {
-        case _: StringContext.InvalidEscapeException =>
-          StringUtil.unescapeStringCharacters(getText)
-        case e: IllegalArgumentException if e.getMessage.contains("invalid unicode escape") =>
-          StringUtil.unescapeStringCharacters(getText)
-      }
-    case _ => text
+  override protected final def toValue(text: String): String = {
+    val noUnicodeEscapesInRawStrings = this.noUnicodeEscapesInRawStrings
+    val isRaw = this match {
+      case s: ScInterpolatedStringLiteral => s.kind == ScInterpolatedStringLiteral.Raw
+      case _ => this.isMultiLineString
+    }
+    val parser = new ScalaStringParser(null, isRaw, noUnicodeEscapesInRawStrings = noUnicodeEscapesInRawStrings, exitOnEscapingWrongSymbol = false)
+    val builder = new java.lang.StringBuilder()
+    parser.parse(text, builder)
+    builder.toString
   }
 
   override protected final def wrappedValue(value: String): ScLiteral.Value[String] =
@@ -73,6 +71,12 @@ class ScStringLiteralImpl(node: ASTNode,
 
 object ScStringLiteralImpl {
 
+  /**
+   * @param value aт unescaped value of a string literal.<br>
+   *              Example:<br>
+   *              Original string: "test \u0023"
+   *              Value: "test #"
+   */
   final case class Value(override val value: String) extends ScLiteral.Value(value) {
 
     import QuotedLiteralImplBase.SingleLineQuote

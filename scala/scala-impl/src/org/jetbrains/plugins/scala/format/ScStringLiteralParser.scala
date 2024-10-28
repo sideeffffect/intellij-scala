@@ -13,7 +13,7 @@ object ScStringLiteralParser {
         val content = Option(literal.contentText)
         content.map { s0 =>
           val isRawContent = literal.isMultiLineString
-          val s = ScalaStringUtils.unescapeStringCharacters(s0, isRaw = isRawContent)
+          val s = ScalaStringUtils.unescapeStringCharacters(s0, isRaw = isRawContent, noUnicodeEscapesInRawStrings = literal.noUnicodeEscapesInRawStrings)
           Text(s) :: Nil
         }
     }

@@ -34,6 +34,7 @@ object InterpolatedStringParser extends StringParser {
 
   private def parseLiteral(literal: ScInterpolatedStringLiteral): Seq[StringPart] = {
     val formatted = literal.firstChild.exists(_.textMatches("f"))
+    val noUnicodeEscapesInRawStrings = literal.noUnicodeEscapesInRawStrings
 
     val pairs: Seq[(PsiElement, Option[PsiElement])] = {
       val elements = literal.children.toList.drop(1)
@@ -54,7 +55,7 @@ object InterpolatedStringParser extends StringParser {
         }
         val specifier = if (!formatted) None else nextOpt match {
           case Some(next) if isTextElement(next) =>
-            val nextText = textIn(next, isRaw)
+            val nextText = textIn(next, isRaw = isRaw, noUnicodeEscapesInRawStrings = noUnicodeEscapesInRawStrings)
             val matched = FormatSpecifierStartPattern.findFirstIn(nextText)
             matched.map { format =>
               Specifier(Span(next, 0, format.length), format)
@@ -67,8 +68,8 @@ object InterpolatedStringParser extends StringParser {
       // in input: s"${a}text${b}"
       case (e, _) if isTextElement(e) =>
         val text: String = {
-          val value = textIn(e, isRaw)
-          // specifier was already handled in previous step, when handling injection, so drop it here
+          val value = textIn(e, isRaw = isRaw, noUnicodeEscapesInRawStrings = noUnicodeEscapesInRawStrings)
+          // specifier was already handled in the previous step, when handling injection, so drop it here
           if (formatted) FormatSpecifierStartPattern.replaceFirstIn(value, "")
           else value
         }
@@ -104,9 +105,9 @@ object InterpolatedStringParser extends StringParser {
       elementType == ScalaTokenTypes.tINTERPOLATED_MULTILINE_STRING
   }
 
-  private def textIn(part: PsiElement, isRaw: Boolean): String = {
+  private def textIn(part: PsiElement, isRaw: Boolean, noUnicodeEscapesInRawStrings: Boolean): String = {
     val text = part.getText
-    ScalaStringUtils.unescapeStringCharacters(text, isRaw)
+    ScalaStringUtils.unescapeStringCharacters(text, isRaw, noUnicodeEscapesInRawStrings)
   }
 
   private val SpecialEscapeRegex = "(%%|%n)".r

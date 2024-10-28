@@ -158,7 +158,7 @@ object FormattedStringParser extends StringParser {
     assert(!literal.is[ScInterpolatedStringLiteral])
     val isRawContent = literal.isMultiLineString
     val texts: List[Text] = regexParts.map { s0 =>
-      val s = ScalaStringUtils.unescapeStringCharacters(s0, isRawContent)
+      val s = ScalaStringUtils.unescapeStringCharacters(s0, isRawContent, noUnicodeEscapesInRawStrings = literal.noUnicodeEscapesInRawStrings)
       Text(s)
     }.toList
 

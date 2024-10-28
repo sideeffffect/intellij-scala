@@ -8,25 +8,28 @@ import java.lang.{StringBuilder => JStringBuilder}
 import java.util
 
 /**
- * Initially based on [[com.intellij.codeInsight.CodeInsightUtilCore.StringParser]]
- * and [[com.intellij.codeInsight.CodeInsightUtilCore.parseStringCharacters]]
+ * Initially based on these two classes:
+ * - [[com.intellij.codeInsight.CodeInsightUtilCore.StringParser]]
+ * - [[com.intellij.codeInsight.CodeInsightUtilCore.parseStringCharacters]]
  *
  * Removed everything unrelated:
  *  - drop support for octal literals<br>
- *    (cause it's dropped in 2.13 https://github.com/scala/scala/pull/6324 and were deprecated for a long time)
+ *    (because it's dropped in 2.13 https://github.com/scala/scala/pull/6324 and were deprecated for a long time)
  *  - remove logic with "isAfterEscapedBackslash"<br>
- *    (since 2.13.2 unicode escapes are not inlined in source code: https://github.com/scala/scala/pull/8282)
+ *    (since 2.13.2 Unicode escapes are not inlined in source code: https://github.com/scala/scala/pull/8282)
  *
  * @param isRaw includes
  *              - single line raw literal: raw"42"
  *              - multiline raw literal: raw"""42"""
  *              - multiline non-interpolated literal: """42"""
  * @see [[org.jetbrains.plugins.scala.highlighter.lexer.ScalaStringLiteralLexer]] and other lexers in same package
+ * @see [[org.jetbrains.plugins.scala.format.ScalaStringUtils]]
  */
 final class ScalaStringParser(
   @Nullable
   sourceOffsets: Array[Int],
   isRaw: Boolean,
+  noUnicodeEscapesInRawStrings: Boolean,
   exitOnEscapingWrongSymbol: Boolean = true
 ) {
 
@@ -90,7 +93,7 @@ final class ScalaStringParser(
     val newIndex =
       if (!onlyUnicode && ScalaStringParser.parseEscapedChar(c, outChars))
         index
-      else if (c == 'u')
+      else if (c == 'u' && !(isRaw && noUnicodeEscapesInRawStrings))
         parseUnicodeEscape(chars, outChars, index - 1)
       else -1
 
