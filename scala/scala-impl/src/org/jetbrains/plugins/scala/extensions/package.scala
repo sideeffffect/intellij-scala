@@ -849,6 +849,12 @@ package object extensions {
     def prevLeaf: Option[PsiElement] =
       PsiTreeUtil.prevLeaf(element).toOption
 
+    /**
+     * Returns the previous leaf element which is not a whitespace or comment.
+     *
+     * @note there is also [[PsiTreeUtil.prevCodeLeaf]],
+     *       but the later method also skips the empty error elements which can be important in some places
+     */
     def prevLeafNotWhitespaceComment: Option[PsiElement] = {
       var prev: PsiElement = PsiTreeUtil.prevLeaf(element)
       while (prev != null && (prev.is[PsiWhiteSpace] ||

@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.scala.codeInsight.intention.types
 
-import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScBindingPattern, ScTypedPatternLike, ScWildcardPattern}
+import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScBindingPattern, ScPattern, ScTypedPatternLike, ScWildcardPattern}
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.ScTypeElement
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScUnderscoreSection
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScParameter
@@ -22,9 +22,10 @@ trait Strategy {
   def variableWithType(variable: ScVariableDefinition,
                        typeElement: ScTypeElement): Boolean
 
-  def patternWithoutType(pattern: ScBindingPattern): Boolean = true
-
-  def wildcardPatternWithoutType(pattern: ScWildcardPattern): Boolean = true
+  /**
+   * This is supposed to work only for [[ScBindingPattern]] and [[ScWildcardPattern]]
+   */
+  def patternWithoutType(pattern: ScPattern) = true
 
   def patternWithType(pattern: ScTypedPatternLike): Boolean = true
 

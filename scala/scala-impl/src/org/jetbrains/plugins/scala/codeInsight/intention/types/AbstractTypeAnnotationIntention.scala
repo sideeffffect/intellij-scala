@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.scala.codeInsight.intention.types.AbstractTypeAnnotationIntention._
 import org.jetbrains.plugins.scala.extensions._
+import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScPattern, ScReferencePattern, ScTypedPatternLike, ScWildcardPattern}
 import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScFunctionExpr, ScTypedExpression, ScUnderscoreSection}
@@ -34,8 +35,24 @@ abstract class AbstractTypeAnnotationIntention extends PsiElementBaseIntentionAc
 }
 
 object AbstractTypeAnnotationIntention {
-  private def adjustElementAtOffset(element: PsiElement, editor: Editor): PsiElement =
-    ScalaPsiUtil.adjustElementAtOffset(element, editor.getCaretModel.getOffset)
+  private def adjustElementAtOffset(element: PsiElement, editor: Editor): PsiElement = {
+    val caretOffset = editor.getCaretModel.getOffset
+    val adjusted1 = ScalaPsiUtil.adjustElementAtOffset(element, caretOffset)
+
+    // Handle some cases when the caret is located after identifier/underscore
+    // and before some "separator" tokens: (dot, coma, parentheses).
+    // In this case this next element will be selected, and we need to adjust it to the previous leaf.
+    // Example 1: Seq(1, 2).map(_<caret>.toString)
+    // Example 2: Seq(1, 2).map((_: Int<caret>).toString)
+    // Example 3: case Some(SomeCaseClass(_<caret>, bar, _))
+    val adjusted2 = adjusted1.elementType match {
+      case ScalaTokenTypes.tCOMMA | ScalaTokenTypes.tDOT | ScalaTokenTypes.tRPARENTHESIS =>
+        adjusted1.getPrevNonEmptyLeaf
+      case _ =>
+        adjusted1
+    }
+    adjusted2
+  }
 
   def functionParent(element: PsiElement): Option[ScFunctionDefinition] =
     for {
@@ -61,12 +78,11 @@ object AbstractTypeAnnotationIntention {
       if variable.bindings.size == 1
     } yield variable
 
-  private[types] def underscoreSectionParent(element: PsiElement): Option[ScUnderscoreSection] = {
+  private[types] def underscoreSectionParent(element: PsiElement): Option[ScUnderscoreSection] =
     element.withParentsInFile.collectFirst {
       case underscore: ScUnderscoreSection => underscore
       case (_: ScTypedExpression) & FirstChild(underscore: ScUnderscoreSection) => underscore
     }
-  }
 
   def complete(element: PsiElement, strategy: Strategy): Boolean = {
     functionParent(element).foreach { function =>
@@ -96,7 +112,8 @@ object AbstractTypeAnnotationIntention {
       }
     }
 
-    underscoreSectionParent(element).foreach { underscore =>
+    val underscoreSection = underscoreSectionParent(element)
+    underscoreSection.foreach { underscore =>
       return if (underscore.getParent.is[ScTypedExpression])
         strategy.underscoreSectionWithType(underscore)
       else
@@ -129,14 +146,22 @@ object AbstractTypeAnnotationIntention {
         case p@ScTypedPatternLike(_) =>
           return strategy.patternWithType(p)
         case p: ScReferencePattern =>
-          return strategy.patternWithoutType(p)
+          p.getParent match {
+            case typed: ScTypedPatternLike =>
+              return strategy.patternWithType(typed)
+            case _ =>
+              return strategy.patternWithoutType(p)
+          }
+        case w: ScWildcardPattern =>
+          w.getParent match {
+            case typed: ScTypedPatternLike =>
+              return strategy.patternWithType(typed)
+            case _ =>
+              return strategy.patternWithoutType(w)
+          }
         case _ =>
       }
     }
-    for (pattern <- element.parentsInFile.findByType[ScWildcardPattern]) {
-      return strategy.wildcardPatternWithoutType(pattern)
-    }
-
     false
   }
 }

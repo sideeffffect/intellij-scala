@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.scala.ScalaBundle.message
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
-import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScBindingPattern, ScTypedPatternLike, ScWildcardPattern}
+import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScPattern, ScTypedPatternLike}
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.ScTypeElement
 import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScExpression, ScUnderscoreSection}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScParameter
@@ -47,9 +47,7 @@ class MakeTypeMoreSpecificIntention extends AbstractTypeAnnotationIntention {
 
     override def variableWithoutType(variable: ScVariableDefinition): Boolean = false
 
-    override def patternWithoutType(pattern: ScBindingPattern): Boolean = false
-
-    override def wildcardPatternWithoutType(pattern: ScWildcardPattern): Boolean = false
+    override def patternWithoutType(pattern: ScPattern) = false
 
     override def patternWithType(pattern: ScTypedPatternLike): Boolean = false
 
