@@ -1,3 +1,4 @@
+import CompilationCache.compilationCacheSettings
 import kotlin.Keys.{kotlinRuntimeProvided, kotlinVersion, kotlincJvmTarget}
 import kotlin.KotlinPlugin
 import org.jetbrains.sbtidea.Keys.*
@@ -76,15 +77,6 @@ object Common {
     )
     inConfig(Compile)(settings) ++ inConfig(Test)(settings)
   }
-
-  private def prependIntellijVersion(s: String): String = Versions.intellijVersion + "-" + s
-
-  val compilationCacheSettings: Seq[Setting[?]] = Seq(
-    Compile / pushRemoteCacheConfiguration ~= { _.withOverwrite(true) },
-    Test / pushRemoteCacheConfiguration ~= { _.withOverwrite(true) },
-    Compile / remoteCacheId ~= prependIntellijVersion,
-    Test / remoteCacheId ~= prependIntellijVersion
-  )
 
   private val NewProjectBaseSettings: Seq[Setting[?]] = Seq(
     organization := "JetBrains",

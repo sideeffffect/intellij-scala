@@ -1,11 +1,12 @@
 import Common.*
+import CompilationCache.compilationCacheSettings
 import Dependencies.provided
 import DynamicDependenciesFetcher.*
 import LocalRepoPackager.{localRepoDependencies, localRepoUpdate, relativeJarPath, sbtDep}
 import org.jetbrains.sbtidea.Keys.*
+import org.jetbrains.sbtidea.PluginJars
 
 import java.nio.file.Path
-import org.jetbrains.sbtidea.PluginJars
 
 // Global build settings
 
