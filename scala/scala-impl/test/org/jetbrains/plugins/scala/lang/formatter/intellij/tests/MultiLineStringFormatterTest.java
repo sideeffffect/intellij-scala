@@ -13,7 +13,7 @@ public class MultiLineStringFormatterTest extends TestCase {
     public static Test suite() {
         return new FormatterTestSuite("/formatter/multiLineStringData/") {
             @Override
-            protected void setUp(@NotNull Project project) {
+            public void setUp(@NotNull Project project) {
                 super.setUp(project);
                 CommonCodeStyleSettings settings = getCommonSettings(project);
                 ScalaCodeStyleSettings scalaSettings = getScalaSettings(project);

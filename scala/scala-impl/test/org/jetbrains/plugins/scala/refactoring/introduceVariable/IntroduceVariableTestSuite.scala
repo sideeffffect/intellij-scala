@@ -10,7 +10,7 @@ final class IntroduceVariableTestSuite(path: String) extends ActionTestBase(path
 
   private var myFixture: ScalaIntroduceVariableTestFixture = _
 
-  override protected def setUp(project: Project): Unit = {
+  override def setUp(project: Project): Unit = {
     super.setUp(project)
 
     val alwaysAddTypeSettings = TypeAnnotationSettings.alwaysAddType(ScalaCodeStyleSettings.getInstance(project))
@@ -18,7 +18,7 @@ final class IntroduceVariableTestSuite(path: String) extends ActionTestBase(path
     myFixture.setUp()
   }
 
-  override protected def tearDown(project: Project): Unit = {
+  override def tearDown(project: Project): Unit = {
     myFixture.tearDown()
     super.tearDown(project)
   }
