@@ -70,7 +70,7 @@ object ComparingDiffCollectionKinds extends SimplificationType {
 
   private def partConvertedExprText(expr: ScExpression, subExpr: ScExpression, conversion: String) = {
     val subExprConvertedText = subExpr match {
-      case _: ScMethodCall | _: ScReferenceExpression | _: ScParenthesisedExpr | _: ScTuple => 
+      case _: ScMethodCall | _: ScReferenceExpression | _: ScParenthesisedExpr | _: ScTuple | _: ScNamedTuple =>
         s"${subExpr.getText}.$conversion" 
       case _ => s"(${subExpr.getText}).$conversion"
     }
