@@ -2,14 +2,15 @@ package org.jetbrains.plugins.scala.editor.documentationProvider
 
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.plugins.scala.ScalaVersion
 import org.jetbrains.plugins.scala.editor.documentationProvider.util.ScalaDocumentationsSectionsTestingBase
 import org.jetbrains.plugins.scala.util.assertions.StringAssertions._
 
-class ScalaDocumentationProviderTest_QuickNavigateInfo
+abstract class ScalaDocumentationProviderTest_QuickNavigateInfo
   extends ScalaDocumentationProviderTestBase
     with ScalaDocumentationsSectionsTestingBase {
 
-  private def moduleName: String = getModule.getName
+  protected def moduleName: String = getModule.getName
 
   protected final def doGenerateQuickNavigateInfoBodyTest(
     fileContent: String,
@@ -99,36 +100,12 @@ class ScalaDocumentationProviderTest_QuickNavigateInfo
       s"""[$moduleName] default<br>class Class[T] extends <a href="psi_element://java.lang.Object">Object</a>"""
     )
 
-  def testClassWithGenericParameter_WithBounds(): Unit =
-    doGenerateQuickNavigateInfoBodyTest(
-      s"""trait Trait[A]
-         |class ${|}Class[T <: Trait[_ >: Object]]
-         |""".stripMargin,
-      s"""[$moduleName] default<br>class Class[T &lt;: <a href="psi_element://Trait">Trait</a>[_ &gt;: <a href="psi_element://java.lang.Object">Object</a>]] extends <a href="psi_element://java.lang.Object">Object</a>"""
-    )
-
   def testClassWithGenericParameter_WithRecursiveBounds(): Unit =
     doGenerateQuickNavigateInfoBodyTest(
       s"""trait Trait[T]
          |class ${|}Class2[T <: Trait[T]]
          |""".stripMargin,
       s"""[$moduleName] default<br>class Class2[T &lt;: <a href="psi_element://Trait">Trait</a>[T]] extends <a href="psi_element://java.lang.Object">Object</a>"""
-    )
-
-  def testClassWithGenericParameter_WithRecursiveBounds_1(): Unit =
-    doGenerateQuickNavigateInfoBodyTest(
-      s"""trait Trait[T]
-         |class ${|}Class4[T <: Trait[_ >: Trait[T]]]
-         |""".stripMargin,
-      s"""[$moduleName] default<br>class Class4[T &lt;: <a href="psi_element://Trait">Trait</a>[_ &gt;: <a href="psi_element://Trait">Trait</a>[T]]] extends <a href="psi_element://java.lang.Object">Object</a>"""
-    )
-
-  def testClassWithSuperWithGenerics(): Unit =
-    doGenerateQuickNavigateInfoBodyTest(
-      s"""trait Trait[A]
-         |abstract class ${|}Class extends Comparable[_ <: Trait[_ >: String]]
-         |""".stripMargin,
-      s"""[$moduleName] default<br>abstract class Class extends <a href="psi_element://java.lang.Comparable">Comparable</a>[_ &lt;: <a href="psi_element://Trait">Trait</a>[_ &gt;: <a href="psi_element://java.lang.String">String</a>]]""".stripMargin
     )
 
   def testClassExtendsListShouldNotContainWithObject(): Unit = {
@@ -197,20 +174,28 @@ class ScalaDocumentationProviderTest_QuickNavigateInfo
       """<a href="psi_element://Wrapper">Wrapper</a> <default><br>var field2: <a href="psi_element://java.lang.String">String</a> = "hello""""
     )
 
+  def testNamingPattern(): Unit =
+    doGenerateQuickNavigateInfoBodyTest(
+      s"""class Wrapper {
+         |  var ${|}whole@(field1, field2) = (42, "hello")
+         |}""".stripMargin,
+      """<a href="psi_element://Wrapper">Wrapper</a> <default><br>var whole: (<a href="psi_element://scala.Int">Int</a>, <a href="psi_element://java.lang.String">String</a>) = (42, "hello")"""
+    )
+
+  def testInnerPattern(): Unit =
+    doGenerateQuickNavigateInfoBodyTest(
+      s"""class Wrapper {
+         |  var (field1, ${|}part@(a, b)) = (42, (true, "hello"))
+         |}""".stripMargin,
+      """<a href="psi_element://Wrapper">Wrapper</a> <default><br>var part: (<a href="psi_element://scala.Boolean">Boolean</a>, <a href="psi_element://java.lang.String">String</a>) = (true, "hello")"""
+    )
+
   def testVariableDeclaration(): Unit =
     doGenerateQuickNavigateInfoBodyTest(
       s"""abstract class Wrapper {
          |  var ${|}field2: String
          |}""".stripMargin,
       s"""<a href="psi_element://Wrapper">Wrapper</a> <default><br>var field2: <a href="psi_element://java.lang.String">String</a>"""
-    )
-
-  def testValueWithModifiers(): Unit =
-    doGenerateQuickNavigateInfoBodyTest(
-      s"""class Wrapper {
-         |  protected final lazy val ${|}field2 = "hello"
-         |}""".stripMargin,
-      """<a href="psi_element://Wrapper">Wrapper</a> <default><br>protected final lazy val field2: <a href="psi_element://java.lang.String">String</a> = "hello""""
     )
 
   def testHigherKindedTypeParameters(): Unit =
@@ -309,6 +294,133 @@ class ScalaDocumentationProviderTest_QuickNavigateInfo
          |   println(${|}greeting)
          |}""".stripMargin,
       """A <default><br>greeting: <a href="psi_element://java.lang.String">String</a> = "Hello"""".stripMargin
+    )
+  }
+}
+
+class ScalaDocumentationProviderTest_QuickNavigateInfo_Scala2 extends ScalaDocumentationProviderTest_QuickNavigateInfo {
+  def testClassWithGenericParameter_WithRecursiveBounds_1(): Unit =
+    doGenerateQuickNavigateInfoBodyTest(
+      s"""trait Trait[T]
+         |class ${|}Class4[T <: Trait[_ >: Trait[T]]]
+         |""".stripMargin,
+      s"""[$moduleName] default<br>class Class4[T &lt;: <a href="psi_element://Trait">Trait</a>[_ &gt;: <a href="psi_element://Trait">Trait</a>[T]]] extends <a href="psi_element://java.lang.Object">Object</a>"""
+    )
+
+  def testClassWithSuperWithGenerics(): Unit =
+    doGenerateQuickNavigateInfoBodyTest(
+      s"""trait Trait[A]
+         |abstract class ${|}Class extends Comparable[_ <: Trait[_ >: String]]
+         |""".stripMargin,
+      s"""[$moduleName] default<br>abstract class Class extends <a href="psi_element://java.lang.Comparable">Comparable</a>[_ &lt;: <a href="psi_element://Trait">Trait</a>[_ &gt;: <a href="psi_element://java.lang.String">String</a>]]""".stripMargin
+    )
+
+  def testClassWithGenericParameter_WithBounds(): Unit =
+    doGenerateQuickNavigateInfoBodyTest(
+      s"""trait Trait[A]
+         |class ${|}Class[T <: Trait[_ >: Object]]
+         |""".stripMargin,
+      s"""[$moduleName] default<br>class Class[T &lt;: <a href="psi_element://Trait">Trait</a>[_ &gt;: <a href="psi_element://java.lang.Object">Object</a>]] extends <a href="psi_element://java.lang.Object">Object</a>"""
+    )
+
+  def testValueWithModifiers(): Unit =
+    doGenerateQuickNavigateInfoBodyTest(
+      s"""class Wrapper {
+         |  protected final lazy val ${|}field2 = "hello"
+         |}""".stripMargin,
+      """<a href="psi_element://Wrapper">Wrapper</a> <default><br>protected final lazy val field2: <a href="psi_element://java.lang.String">String</a> = "hello""""
+    )
+}
+
+class ScalaDocumentationProviderTest_QuickNavigateInfo_Scala3 extends ScalaDocumentationProviderTest_QuickNavigateInfo {
+  override protected def supportedIn(version: ScalaVersion): Boolean = version >= ScalaVersion.Latest.Scala_3_5
+
+
+  def testClassWithGenericParameter_WithRecursiveBounds_1(): Unit =
+    doGenerateQuickNavigateInfoBodyTest(
+      s"""trait Trait[T]
+         |class ${|}Class4[T <: Trait[? >: Trait[T]]]
+         |""".stripMargin,
+      s"""[$moduleName] default<br>class Class4[T &lt;: <a href="psi_element://Trait">Trait</a>[? &gt;: <a href="psi_element://Trait">Trait</a>[T]]] extends <a href="psi_element://java.lang.Object">Object</a>"""
+    )
+
+  def testClassWithSuperWithGenerics(): Unit =
+    doGenerateQuickNavigateInfoBodyTest(
+      s"""trait Trait[A]
+         |abstract class ${|}Class extends Comparable[? <: Trait[? >: String]]
+         |""".stripMargin,
+      s"""[$moduleName] default<br>abstract class Class extends <a href="psi_element://java.lang.Comparable">Comparable</a>[? &lt;: <a href="psi_element://Trait">Trait</a>[? &gt;: <a href="psi_element://java.lang.String">String</a>]]""".stripMargin
+    )
+
+  def testClassWithGenericParameter_WithBounds(): Unit =
+    doGenerateQuickNavigateInfoBodyTest(
+      s"""trait Trait[A]
+         |class ${|}Class[T <: Trait[? >: Object]]
+         |""".stripMargin,
+      s"""[$moduleName] default<br>class Class[T &lt;: <a href="psi_element://Trait">Trait</a>[? &gt;: <a href="psi_element://java.lang.Object">Object</a>]] extends <a href="psi_element://java.lang.Object">Object</a>"""
+    )
+
+  def testValueWithModifiers(): Unit =
+    doGenerateQuickNavigateInfoBodyTest(
+      s"""class Wrapper {
+         |  protected final lazy val ${|}field2 = "hello"
+         |}""".stripMargin,
+      """<a href="psi_element://Wrapper">Wrapper</a> <default><br>protected final lazy val field2: &quot;hello&quot; = "hello""""
+    )
+
+
+  def testNamedTupleDefinition(): Unit = {
+    doGenerateQuickNavigateInfoBodyTest(
+      s"""
+         |object Blub {
+         |  val a: (x: Int, y: String) = (x = 1, y = "blub")
+         |  ${|}a
+         |}
+         |""".stripMargin,
+      """<a href="psi_element://Blub">Blub</a> <default><br>val a: (x: <a href="psi_element://scala.Int">Int</a>, y: <a href="psi_element://java.lang.String">String</a>) = (x = 1, y = "blub")"""
+    )
+  }
+
+  def testNamedTuple(): Unit = {
+    doGenerateQuickNavigateInfoBodyTest(
+      s"""
+         |object Blub {
+         |  val (x = ${|}test, y = _) = (x = 1, y = "blub")
+         |}
+         |""".stripMargin,
+      """<a href="psi_element://Blub">Blub</a> <default><br>val test: <a href="psi_element://scala.Int">Int</a> = 1"""
+    )
+
+
+    doGenerateQuickNavigateInfoBodyTest(
+      s"""
+         |object Blub {
+         |  val (x = _, y = ${|}test) = (x = 1, y = "blub")
+         |}
+         |""".stripMargin,
+      """<a href="psi_element://Blub">Blub</a> <default><br>val test: <a href="psi_element://java.lang.String">String</a> = "blub""""
+    )
+  }
+
+  def testNamedTupleComponent(): Unit = {
+    doGenerateQuickNavigateInfoBodyTest(
+      s"""
+         |object Blub {
+         |  val a = (x = 1, y = "blub")
+         |  a.${|}x
+         |}
+         |""".stripMargin,
+      """(x: <a href="psi_element://scala.Int">Int</a>, y: <a href="psi_element://java.lang.String">String</a>).x"""
+    )
+
+    doGenerateQuickNavigateInfoBodyTest(
+      s"""
+         |object Blub {
+         |  val a = (x = 1, y = "blub")
+         |  a.${|}y
+         |}
+         |""".stripMargin,
+      """(x: <a href="psi_element://scala.Int">Int</a>, y: <a href="psi_element://java.lang.String">String</a>).y"""
     )
   }
 }
