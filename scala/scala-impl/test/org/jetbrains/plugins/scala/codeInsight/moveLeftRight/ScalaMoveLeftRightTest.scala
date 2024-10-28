@@ -66,6 +66,30 @@ class ScalaMoveLeftRightTest extends ScalaMoveLeftRightTestBase {
     )
   }
 
+  def testNamedTuple(): Unit = {
+    doTestFromLeftToRight(
+      "val x = (<caret>a = true, b = 1, c = 2)",
+      "val x = (b = 1, <caret>a = true, c = 2)",
+      "val x = (b = 1, c = 2, <caret>a = true)",
+    )
+  }
+
+  def testNamedTupleType(): Unit = {
+    doTestFromLeftToRight(
+      "val x: (<caret>a: Boolean, b: Int, c: Unit)",
+      "val x: (b: Int, <caret>a: Boolean, c: Unit)",
+      "val x: (b: Int, c: Unit, <caret>a: Boolean)",
+    )
+  }
+
+  def testNamedTuplePattern(): Unit = {
+    doTestFromLeftToRight(
+      "val (<caret>a = _, b = _, c = _) = ???",
+      "val (b = _, <caret>a = _, c = _) = ???",
+      "val (b = _, c = _, <caret>a = _) = ???",
+    )
+  }
+
   def testCaseClauses(): Unit = {
     doTestFromRightToLeft(
       """1 match {
@@ -127,5 +151,4 @@ class ScalaMoveLeftRightTest extends ScalaMoveLeftRightTestBase {
       "val hList: Int :: HNil :: <caret>String = ???"
     )
   }
-
 }

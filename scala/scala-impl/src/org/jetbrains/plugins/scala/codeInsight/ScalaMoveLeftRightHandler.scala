@@ -7,7 +7,7 @@ import org.jetbrains.plugins.scala.extensions.{PsiElementExt, childOf}
 import org.jetbrains.plugins.scala.lang.parser.util.ParserUtils
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScReference
 import org.jetbrains.plugins.scala.lang.psi.api.base.patterns._
-import org.jetbrains.plugins.scala.lang.psi.api.base.types.{ScInfixLikeTypeElement, ScInfixTypeElement, ScTupleTypeElement, ScTypeArgs}
+import org.jetbrains.plugins.scala.lang.psi.api.base.types.{ScInfixLikeTypeElement, ScInfixTypeElement, ScNamedTupleTypeElement, ScTupleTypeElement, ScTypeArgs}
 import org.jetbrains.plugins.scala.lang.psi.api.expr._
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.{ScParameterClause, ScTypeParamClause}
 import org.jetbrains.plugins.scala.lang.refactoring.util.ScalaNamesUtil
@@ -27,6 +27,12 @@ class ScalaMoveLeftRightHandler extends MoveElementLeftRightHandler {
         pa.patterns.toArray
       case t: ScTuple =>
         t.exprs.toArray
+      case nt: ScNamedTuple =>
+        nt.components.toArray
+      case nt: ScNamedTupleTypeElement =>
+        nt.components.toArray
+      case nt: ScNamedTuplePattern =>
+        nt.components.toArray
       case t: ScTupleTypeElement =>
         t.components.toArray
       case tp: ScTuplePattern =>
