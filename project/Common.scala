@@ -107,7 +107,7 @@ object Common {
     ScopeFilter(inDependencies(ThisProject, includeRoot = false))
 
   //Common settings for Community & Ultimate main projects
-  val MainProjectSettings: Seq[Def.SettingsDefinition] = Seq(
+  val MainProjectSettings: Seq[Setting[?]] = Seq(
     sourcesInBase   := false,
     packageMethod := PackagingMethod.Standalone(),
     libraryDependencies ++= Seq(

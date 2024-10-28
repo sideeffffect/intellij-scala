@@ -71,7 +71,7 @@ lazy val scalaCommunity: sbt.Project =
       pluginXml,
       scalaCli % "test->test;compile->compile"
     )
-    .settings(MainProjectSettings *)
+    .settings(MainProjectSettings)
     .settings(
       packageAdditionalProjects := Seq(
         jps,
