@@ -1,3 +1,4 @@
+import CompilationCache.compilationCacheSettings
 import kotlin.Keys.{kotlinRuntimeProvided, kotlinVersion, kotlincJvmTarget}
 import kotlin.KotlinPlugin
 import org.jetbrains.sbtidea.Keys.*
@@ -68,23 +69,14 @@ object Common {
     Test / unmanagedResourceDirectories := Seq((Test / resourceDirectory).value)
   )
 
-  val NoSourceDirectories: Seq[Def.SettingsDefinition] = Seq(
-    Compile / sourceDirectories := Nil,
-    Compile / managedSourceDirectories := Nil,
-    Compile / unmanagedSourceDirectories := Nil,
-    Test / sourceDirectories := Nil,
-    Test / managedSourceDirectories := Nil,
-    Test / unmanagedSourceDirectories := Nil,
-  )
-
-  private def prependIntellijVersion(s: String): String = Versions.intellijVersion + "-" + s
-
-  val compilationCacheSettings: Seq[Setting[?]] = Seq(
-    Compile / pushRemoteCacheConfiguration ~= { _.withOverwrite(true) },
-    Test / pushRemoteCacheConfiguration ~= { _.withOverwrite(true) },
-    Compile / remoteCacheId ~= prependIntellijVersion,
-    Test / remoteCacheId ~= prependIntellijVersion
-  )
+  val NoSourceDirectories: Seq[Setting[?]] = {
+    val settings = Seq(
+      sourceDirectories := Seq.empty,
+      managedSourceDirectories := Seq.empty,
+      unmanagedSourceDirectories := Seq.empty
+    )
+    inConfig(Compile)(settings) ++ inConfig(Test)(settings)
+  }
 
   private val NewProjectBaseSettings: Seq[Setting[?]] = Seq(
     organization := "JetBrains",
@@ -107,7 +99,7 @@ object Common {
     ScopeFilter(inDependencies(ThisProject, includeRoot = false))
 
   //Common settings for Community & Ultimate main projects
-  val MainProjectSettings: Seq[Def.SettingsDefinition] = Seq(
+  val MainProjectSettings: Seq[Setting[?]] = Seq(
     sourcesInBase   := false,
     packageMethod := PackagingMethod.Standalone(),
     libraryDependencies ++= Seq(
