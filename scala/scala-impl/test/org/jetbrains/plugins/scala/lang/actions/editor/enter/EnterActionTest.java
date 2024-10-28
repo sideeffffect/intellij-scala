@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.scala.lang.actions.editor.enter;
+ package org.jetbrains.plugins.scala.lang.actions.editor.enter;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.project.Project;
@@ -14,7 +14,7 @@ public final class EnterActionTest extends TestCase {
     public static Test suite() {
         return new AbstractEnterActionTestBase(DATA_PATH) {
             @Override
-            protected void setUp(@NotNull Project project) {
+            public void setUp(@NotNull Project project) {
                 super.setUp(project);
                 CodeInsightSettings.getInstance().JAVADOC_STUB_ON_ENTER = false; //No, we don't need it.
             }

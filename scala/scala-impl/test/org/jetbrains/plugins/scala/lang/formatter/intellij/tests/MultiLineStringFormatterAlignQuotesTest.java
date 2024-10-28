@@ -14,7 +14,7 @@ public class MultiLineStringFormatterAlignQuotesTest extends TestCase {
     public static Test suite() {
         return new FormatterTestSuite("/formatter/multiLineStringDataAlignQuotes/") {
             @Override
-            protected void setUp(@NotNull Project project) {
+            public void setUp(@NotNull Project project) {
                 super.setUp(project);
                 CommonCodeStyleSettings settings = getCommonSettings(project);
                 ScalaCodeStyleSettings scalaSettings = getScalaSettings(project);
