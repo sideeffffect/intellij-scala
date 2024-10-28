@@ -750,7 +750,7 @@ class ScalaFunctionParameterInfoHandler extends ScalaParameterInfoHandler[PsiEle
    */
   override protected def findCall(context: ParameterInfoContext): PsiElement = {
     val file = context.getFile
-    val offset = context.getEditor.getCaretModel.getOffset
+    val offset = context.getOffset
     val element = file.findElementAt(offset)
     if (element.is[PsiWhiteSpace])
     if (element == null) return null
