@@ -13,16 +13,16 @@ import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil._
 import org.jetbrains.plugins.scala.lang.psi.api.PropertyMethods._
 import org.jetbrains.plugins.scala.lang.psi.api.statements._
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScClassParameter
-import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScTypedDefinition
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef._
-import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiManager
+import org.jetbrains.plugins.scala.lang.psi.api.toplevel.{ScNamedElement, ScTypedDefinition}
+import org.jetbrains.plugins.scala.lang.psi.impl.{ScalaPsiElementFactory, ScalaPsiManager}
 import org.jetbrains.plugins.scala.lang.psi.types._
-import org.jetbrains.plugins.scala.lang.psi.types.api.StdType
+import org.jetbrains.plugins.scala.lang.psi.types.api.{NamedTupleType, ParameterizedType, StdType}
 import org.jetbrains.plugins.scala.lang.psi.types.result._
 import org.jetbrains.plugins.scala.lang.refactoring.util.ScalaNamesUtil
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveState.ResolveStateExt
 import org.jetbrains.plugins.scala.lang.resolve.processor._
-import org.jetbrains.plugins.scala.project.ProjectContext
+import org.jetbrains.plugins.scala.project.{ProjectContext, ScalaFeatures}
 import org.jetbrains.plugins.scala.util.UnloadableThreadLocal
 
 import java.{util => ju}
@@ -473,6 +473,39 @@ object TypeDefinitionMembers {
         return false
     }
     true
+  }
+
+  def processNamedTuple(p: ParameterizedType, execute: PsiElement => Boolean): Boolean = {
+    // Components of named tuples can be accessed in reference expressions via their names, even though
+    // there are no physical accessor methods. Rather, the compiler rewrites these accesses to the
+    // corresponding component index. We just link to the component that is referenced in its name literal
+    // or synthesize a dummy method.
+    p match {
+      case NamedTupleType(comps) =>
+        comps.forall {
+          case (lit@NamedTupleType.NameType(name), typ) =>
+            lit.psiElement match {
+              case Some(named: ScNamedElement) =>
+                execute(named)
+              case navigationElement =>
+                val property = ScalaPsiElementFactory.createMethodFromText(
+                  text = s"def $name: ${typ.canonicalText}",
+                  features = ScalaFeatures.defaultScala3,
+                )(p.projectContext)
+
+                navigationElement.foreach {
+                  // This enables navigation to "a" in `NamedTuple[("a", "b"), (Int, Int)](???)`
+                  property.syntheticNavigationElement = _
+                }
+
+                execute(property)
+            }
+          case _ =>
+            true
+        }
+      case _ =>
+        true
+    }
   }
 
   private def signaturesFromCompanion(clazz: PsiClass, withSupers: Boolean): TermNodes.Map = {
