@@ -7,8 +7,18 @@ import java.lang
 
 class ScalaStringParserTest extends TestCase {
 
-  private def parse(content: String, isRaw: Boolean, exitOnEscapingWrongSymbol: Boolean = true): String = {
-    val parser = new ScalaStringParser(null, isRaw, exitOnEscapingWrongSymbol)
+  private def parse(
+    content: String,
+    isRaw: Boolean,
+    noUnicodeEscapesInRawStrings: Boolean = false,
+    exitOnEscapingWrongSymbol: Boolean = true,
+  ): String = {
+    val parser = new ScalaStringParser(
+      null,
+      isRaw,
+      noUnicodeEscapesInRawStrings = noUnicodeEscapesInRawStrings,
+      exitOnEscapingWrongSymbol = exitOnEscapingWrongSymbol
+    )
     val builder = new lang.StringBuilder()
     parser.parse(content, builder)
     builder.toString
@@ -19,6 +29,11 @@ class ScalaStringParserTest extends TestCase {
     assertEquals("X \\ X \t X \t X \\t X # X \\u0023 X", parse(content, isRaw = false))
     //raw
     assertEquals("X \\\\ X \t X \\t X \\\\t X # X \\\\u0023 X", parse(content, isRaw = true))
+  }
+
+  def testValidContent_NoUnicodeSequenceInRaw(): Unit = {
+    val content = "X \\\\ X \t X \\t X \\\\t X \\u0023 X \\\\u0023 X"
+    assertEquals("X \\\\ X \t X \\t X \\\\t X \\u0023 X \\\\u0023 X", parse(content, isRaw = true, noUnicodeEscapesInRawStrings = true))
   }
 
   def testStopAtInvalidEscape(): Unit = {

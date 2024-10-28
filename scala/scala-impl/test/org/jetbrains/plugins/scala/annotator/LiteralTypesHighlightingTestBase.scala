@@ -1,14 +1,20 @@
-package org.jetbrains.plugins.scala
-package annotator
+package org.jetbrains.plugins.scala.annotator
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.CharsetToolkit
+import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.scala.util.TestUtils
 
 import java.io.File
 
-abstract class LiteralTypesHighlightingTestBase extends ScalaHighlightingTestBase {
-  def folderPath = TestUtils.getTestDataPath + "/annotator/literalTypes/"
+/**
+ * @see [[org.jetbrains.plugins.scala.annotator.element.ScLiteralTypeElementAnnotatorTestBase]]
+ */
+abstract class LiteralTypesHighlightingTestBase
+  extends ScalaLightCodeInsightFixtureTestCase
+    with ScalaHighlightingTestLike {
+
+  def folderPath: String = TestUtils.getTestDataPath + "/annotator/literalTypes/"
 
   def doTest(expectedErrors: List[Message] = Nil, fileText: Option[String] = None, settingOn: Boolean = false): Unit = {
     val text = fileText.getOrElse {
