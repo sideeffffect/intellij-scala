@@ -68,14 +68,14 @@ object Common {
     Test / unmanagedResourceDirectories := Seq((Test / resourceDirectory).value)
   )
 
-  val NoSourceDirectories: Seq[Def.SettingsDefinition] = Seq(
-    Compile / sourceDirectories := Nil,
-    Compile / managedSourceDirectories := Nil,
-    Compile / unmanagedSourceDirectories := Nil,
-    Test / sourceDirectories := Nil,
-    Test / managedSourceDirectories := Nil,
-    Test / unmanagedSourceDirectories := Nil,
-  )
+  val NoSourceDirectories: Seq[Setting[?]] = {
+    val settings = Seq(
+      sourceDirectories := Seq.empty,
+      managedSourceDirectories := Seq.empty,
+      unmanagedSourceDirectories := Seq.empty
+    )
+    inConfig(Compile)(settings) ++ inConfig(Test)(settings)
+  }
 
   private def prependIntellijVersion(s: String): String = Versions.intellijVersion + "-" + s
 

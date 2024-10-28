@@ -91,6 +91,7 @@ lazy val scalaCommunity: sbt.Project =
     )
 
 lazy val pluginXml = newProject("pluginXml", file("pluginXml"))
+  .settings(NoSourceDirectories)
   .settings(
     packageMethod := PackagingMethod.Standalone(),
     packageFileMappings += {
@@ -188,6 +189,7 @@ lazy val worksheetReplInterface =
 
 lazy val worksheetReplInterfaceImpls: Project =
   newProject("worksheet-repl-interface-impls", file("scala/worksheet-repl-interface-impls"))
+    .settings(NoSourceDirectories)
     .settings(
       (Compile / javacOptions) := outOfIDEAProcessJavacOptions,
       (Compile / scalacOptions) := outOfIDEAProcessScalacOptions,
@@ -489,6 +491,7 @@ lazy val compilerJps =
 
 lazy val repackagedZinc =
   newProject("repackagedZinc", file("target/tools/zinc"))
+    .settings(NoSourceDirectories)
     .settings(
       packageOutputDir := baseDirectory.value / "plugin",
       packageAssembleLibraries := true,
@@ -814,6 +817,7 @@ lazy val featuresTrainerIntegration =
 
 lazy val runtimeDependencies = project.in(file("target/tools/runtime-dependencies"))
   .enablePlugins(DynamicDependenciesFetcher, LocalRepoPackager)
+  .settings(NoSourceDirectories)
   .settings(
     name := "runtimeDependencies",
     organization := "JetBrains",
