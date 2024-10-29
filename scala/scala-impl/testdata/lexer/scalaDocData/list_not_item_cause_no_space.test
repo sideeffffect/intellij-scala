@@ -6,7 +6,7 @@
  *   I.data
  *   i.data
  */
- -----
+-----
 DOC_COMMENT_START {/**}
 DOC_WHITESPACE {
  }
@@ -41,5 +41,3 @@ DOC_COMMENT_DATA {i.data}
 DOC_WHITESPACE {
  }
 DOC_COMMENT_END {*/}
-DOC_WHITESPACE {
-}

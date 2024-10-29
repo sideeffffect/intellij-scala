@@ -5,7 +5,7 @@
  *   X. item
  *   x. item
  */
- -----
+-----
 DOC_COMMENT_START {/**}
 DOC_WHITESPACE {
  }
@@ -35,5 +35,3 @@ DOC_COMMENT_DATA {x. item}
 DOC_WHITESPACE {
  }
 DOC_COMMENT_END {*/}
-DOC_WHITESPACE {
-}
