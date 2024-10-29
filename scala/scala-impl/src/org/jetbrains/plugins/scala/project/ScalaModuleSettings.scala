@@ -128,9 +128,6 @@ private class ScalaModuleSettings private(
   val isSource3Enabled: Boolean =
     source3Options.isSource3Enabled
 
-  val noUnicodeEscapesInRawStrings: Boolean =
-    scalaLanguageLevel.isScala3 || isSource3 && source3Options.unicodeEscapesRaw
-
   val hasSourceFutureFlag: Boolean =
     additionalCompilerOptions.contains("-source:future") || additionalCompilerOptions.contains("--source:future")
 
@@ -158,6 +155,7 @@ private class ScalaModuleSettings private(
     ScalaFeatures(
       scalaMinorVersion.getOrElse(ScalaVersion.default),
       isSource3 = isSource3,
+      isSource3UnicodeEscapesRaw = source3Options.unicodeEscapesRaw,
       hasNoIndentFlag = hasNoIndentFlag,
       hasOldSyntaxFlag = hasOldSyntaxFlag,
       hasDeprecationFlag = hasDeprecationFlag,
@@ -201,7 +199,7 @@ private object ScalaModuleSettings {
       val scalaSdk = processor.getFoundValue.asInstanceOf[LibraryEx]
 
       val scalaVersionProvider: Option[ScalaVersionProvider] = Option(scalaSdk).map(ScalaVersionProvider.FromScalaSdk).orElse(
-        Option(module.getUserData(UserDataKeys.LightTestScalaVersion)).map(ScalaVersionProvider.Explicit(_, None))
+        Option(module.getUserData(UserDataKeys.LightTestScalaVersion)).map(v => ScalaVersionProvider.Explicit(v.languageLevel, Some(v.minor)))
       )
       scalaVersionProvider.map(new ScalaModuleSettings(module, isBuildModule = false, _))
     }

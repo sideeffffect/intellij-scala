@@ -51,7 +51,7 @@ package object project {
 
     /** Designed to be used in light tests without any libraries */
     @TestOnly
-    val LightTestScalaVersion: Key[ScalaLanguageLevel] = Key.create("light-test-scala-version")
+    val LightTestScalaVersion: Key[ScalaVersion] = Key.create("light-test-scala-version")
   }
 
   implicit class LibraryExt(private val library: Library) extends AnyVal {
@@ -366,8 +366,6 @@ package object project {
     def source3Options: Source3Options = scalaModuleSettings.fold(Source3Options.none)(_.source3Options)
     def isSource3Enabled: Boolean      = source3Options.isSource3Enabled
 
-    def noUnicodeEscapesInRawStrings: Boolean = scalaModuleSettings.exists(_.noUnicodeEscapesInRawStrings)
-
     def features: SerializableScalaFeatures =
       scalaModuleSettings.fold(ScalaFeatures.default)(_.features)
 
@@ -613,7 +611,7 @@ package object project {
 
     def source3Options: Source3Options = module.fold(Source3Options.none)(_.source3Options)
     def isSource3Enabled: Boolean = isDefinedInModuleOrProject(_.isSource3Enabled)
-    def noUnicodeEscapesInRawStrings: Boolean = isDefinedInModuleOrProject(_.noUnicodeEscapesInRawStrings)
+    def noUnicodeEscapesInRawStrings: Boolean = features.noUnicodeEscapesInRawStrings
 
     def isScala3OrSource3Enabled: Boolean = isDefinedInModuleOrProject(m => m.hasScala3 || m.isSource3Enabled)
 
