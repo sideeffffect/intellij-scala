@@ -5,12 +5,12 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.plugins.scala.ExtensionPointDeclaration
 
 @Internal
-trait ModuleBasedConfigurationMainClassExtractor {
+trait ModuleBasedConfigurationDetailsExtractor {
   def getConfigurationMainClass(config: ModuleBasedConfiguration[_, _]): Option[String]
 }
 
-object ModuleBasedConfigurationMainClassExtractor
-  extends ExtensionPointDeclaration[ModuleBasedConfigurationMainClassExtractor]("com.intellij.sbt.configurationMainClassExtractor") {
+object ModuleBasedConfigurationDetailsExtractor
+  extends ExtensionPointDeclaration[ModuleBasedConfigurationDetailsExtractor]("com.intellij.sbt.configurationDetailsExtractor") {
 
   def getMainClass(config: ModuleBasedConfiguration[_, _]): Option[String] =
     implementations
