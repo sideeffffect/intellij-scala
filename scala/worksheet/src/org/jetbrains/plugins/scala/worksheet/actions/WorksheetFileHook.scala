@@ -2,7 +2,7 @@ package org.jetbrains.plugins.scala
 package worksheet
 package actions
 
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.actionSystem.{ActionToolbar, AnAction}
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.ex.EditorEx
@@ -78,7 +78,7 @@ object WorksheetFileHook {
           scalaFile.incContextModificationStamp()
         case _ =>
       }
-      DaemonCodeAnalyzerEx.getInstanceEx(project).restart(psiFile)
+      DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
     }
   }
 
