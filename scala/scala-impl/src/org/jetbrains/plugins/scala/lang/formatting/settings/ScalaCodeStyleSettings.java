@@ -280,7 +280,10 @@ public class ScalaCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean TRAILING_COMMA_ARG_LIST_ENABLED = true;
   public boolean TRAILING_COMMA_PARAMS_ENABLED = true;
   public boolean TRAILING_COMMA_TUPLE_ENABLED = false;
+  public boolean TRAILING_COMMA_NAMED_TUPLE_ENABLED = false;
   public boolean TRAILING_COMMA_TUPLE_TYPE_ENABLED = false;
+  public boolean TRAILING_COMMA_NAMED_TUPLE_TYPE_ENABLED = false;
+  public boolean TRAILING_COMMA_NAMED_TUPLE_PATTERN_ENABLED = false;
   public boolean TRAILING_COMMA_PATTERN_ARG_LIST_ENABLED = false;
   public boolean TRAILING_COMMA_TYPE_PARAMS_ENABLED = false;
   public boolean TRAILING_COMMA_IMPORT_SELECTOR_ENABLED = false;

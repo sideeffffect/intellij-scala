@@ -2,8 +2,12 @@ package org.jetbrains.plugins.scala.codeInsight.moveLeftRight
 
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.{EditorTestUtil, LightPlatformCodeInsightTestCase}
+import org.jetbrains.plugins.scala.ScalaVersion
+import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
 
-abstract class ScalaMoveLeftRightTestBase extends LightPlatformCodeInsightTestCase {
+abstract class ScalaMoveLeftRightTestBase extends ScalaLightCodeInsightFixtureTestCase {
+  override def supportedIn(version: ScalaVersion): Boolean = version >= ScalaVersion.Latest.Scala_3_5
+
   protected def doTestFromLeftToRight(leftMostPosition: String, rightPositions: String*): Unit = {
     doTest(moveLeft = true, leftMostPosition)
     doTest(false, leftMostPosition, rightPositions: _*)
@@ -41,8 +45,9 @@ abstract class ScalaMoveLeftRightTestBase extends LightPlatformCodeInsightTestCa
     val actionId =
       if (moveLeft) IdeActions.MOVE_ELEMENT_LEFT
       else IdeActions.MOVE_ELEMENT_RIGHT
-    executeAction(actionId)
-    checkResultByText(after)
+
+    getFixture.performEditorAction(actionId)
+    getFixture.checkResult(after)
   }
 
   private def configureEditor(fileText: String): Unit = {

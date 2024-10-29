@@ -23,7 +23,7 @@ abstract class ScLiteralImplBase(node: ASTNode,
       Right(fallbackType)
     case value =>
       Right(
-        ScLiteralType(wrappedValue(value))(getProject)
+        ScLiteralType(wrappedValue(value), psiElement = this)(getProject)
       )
   }
 

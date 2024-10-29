@@ -4,12 +4,12 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.NlsContexts.HintText
 import com.intellij.psi.{PsiClass, PsiElement, PsiNamedElement}
 import org.jetbrains.plugins.scala.editor.documentationProvider.renderers.{ScalaDocTypeRenderer, WithHtmlPsiLink}
-import org.jetbrains.plugins.scala.extensions.{ObjectExt, PsiClassExt, PsiNamedElementExt}
+import org.jetbrains.plugins.scala.extensions.{ObjectExt, PsiClassExt, PsiElementExt, PsiNamedElementExt}
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil.{ContextBoundInfo, inNameContext}
-import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScBindingPattern
-import org.jetbrains.plugins.scala.lang.psi.api.base.{ScPrimaryConstructor, ScReference}
-import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScExpression, ScTuple}
+import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScBindingPattern, ScNamedTuplePattern, ScNamedTuplePatternComponent, ScNamingPattern, ScParenthesisedPattern, ScPattern, ScPatterns, ScTuplePattern}
+import org.jetbrains.plugins.scala.lang.psi.api.base.{ScNamedTupleComponent, ScPrimaryConstructor, ScReference}
+import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScExpression, ScNamedTuple, ScParenthesisedExpr, ScTuple}
 import org.jetbrains.plugins.scala.lang.psi.api.statements._
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.{ScClassParameter, ScParameter}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScTypedDefinition
@@ -20,8 +20,11 @@ import org.jetbrains.plugins.scala.lang.psi.types.api.designator.ScDesignatorTyp
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.TypeAnnotationRenderer.ParameterTypeDecorator
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation._
 import org.jetbrains.plugins.scala.lang.psi.types.recursiveUpdate.ScSubstitutor
+import org.jetbrains.plugins.scala.lang.psi.types.result.Typeable
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
 import org.jetbrains.plugins.scala.project.ProjectContext
+
+import scala.annotation.tailrec
 
 // TODO 1: analyze performance and whether rendered info is cached?
 // TODO 2:  (!) quick info on the element itself should lead to "Show find usages" tooltip, no to quick info tooltip
@@ -102,6 +105,7 @@ class ScalaDocQuickInfoGenerator(
       case clazz: ScTypeDefinition                       => generateClassInfo(buffer, clazz)
       case constructor: ScPrimaryConstructor             => generateClassInfo(buffer, constructor.containingClass)
       case function: ScFunction                          => generateFunctionInfo(buffer, function)
+      case comp: ScNamedTupleComponent                   => generateNamedTupleComponentInfo(buffer, comp)
       case field@inNameContext(value: ScValueOrVariable) => generateValueInfo(buffer, field, value)
       case alias: ScTypeAlias                            => generateTypeAliasInfo(buffer, alias)
       case parameter: ScParameter                        => generateParameterInfo(buffer, parameter)
@@ -224,6 +228,16 @@ class ScalaDocQuickInfoGenerator(
         .append("\n")
     }
 
+  private def generateNamedTupleComponentInfo(buffer: StringBuilder, component: ScNamedTupleComponent): Unit = {
+    component.getParent match {
+      case typeable: Typeable =>
+        typeAnnotationRendererMinimized.renderWithoutColon(buffer, typeable)
+        buffer.append('.')
+        buffer.append(component.name)
+      case _ =>
+    }
+  }
+
   /**
    * TODO: improve SCL-17582
    *
@@ -241,21 +255,49 @@ class ScalaDocQuickInfoGenerator(
         typeAnnotationRendererMinimized.render(buffer, typed)
       case _ =>
     }
-    member.definitionExpr match {
-      case Some(ScTuple(exprs)) =>
-        member
-          .declaredElements
-          .zip(exprs)
-          .collectFirst { case (decl, expr) if decl.name == field.name => expr }
-          .foreach { expr =>
-            buffer.append(" = ")
-            buffer.append(getOneLine(expr.getText))
-          }
-      case Some(definition) =>
+
+    val maybeExpr = member.definitionExpr
+    maybeExpr
+      .flatMap { expr =>
+        val path = field.withParents
+          .takeWhile(_ != member)
+          .toList.reverse
+          .dropWhile(e => !e.is[ScPattern]) // we want to start with the highest pattern
+
+        if (path.nonEmpty) findCorrespondingExpr(path, expr)
+        else if (member.declaredElements.contains(field)) maybeExpr
+        else None
+      }
+      .foreach { expr =>
         buffer.append(" = ")
-        buffer.append(getOneLine(definition.getText))
-      case _ =>
-    }
+        buffer.append(getOneLine(expr.getText))
+      }
+  }
+
+  @tailrec
+  private def findCorrespondingExpr(path: List[PsiElement], expr: ScExpression): Option[ScExpression] = (path, expr) match {
+    // ignore elements that are not really destructed
+    case ((_: ScParenthesisedPattern | _: ScNamingPattern) :: rest, expr) => findCorrespondingExpr(rest, expr)
+    case (path, ScParenthesisedExpr(expr)) => findCorrespondingExpr(path, expr)
+
+    // stop when we reached the end of the path
+    case (Nil, expr) => Some(expr)
+    case (_ :: Nil, expr) => Some(expr)
+
+    // deconstruct element
+    case (ScTuplePattern(_) :: ScPatterns(patterns) :: (rest@(child :: _)), ScTuple(exprs)) if patterns.size == exprs.size =>
+      exprs.lift(patterns.indexOf(child)) match {
+        case Some(expr) => findCorrespondingExpr(rest, expr)
+        case None => None
+      }
+    case (ScNamedTuplePattern(patternComps) :: (comp: ScNamedTuplePatternComponent) :: rest, ScNamedTuple(exprsComps)) if patternComps.size == exprsComps.size =>
+      exprsComps.lift(patternComps.indexOf(comp)).flatMap(_.expr) match {
+        case Some(expr) => findCorrespondingExpr(rest, expr)
+        case None => None
+      }
+    //  TODO: more cases... like constructor-pattern+case-class
+    case _ =>
+      None
   }
 
   private def getOneLine(s: String): String = {

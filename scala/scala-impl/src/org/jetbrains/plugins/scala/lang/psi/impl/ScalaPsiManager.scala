@@ -480,6 +480,15 @@ class ScalaPsiManager(implicit val project: Project) extends Disposable {
     (scope: GlobalSearchScope) => getStableAliasesByFqn("scala.Seq", scope).headOption
   )
 
+  def scalaNamedTupleAlias(scope: GlobalSearchScope): Option[ScTypeAlias] = _scalaNamedTupleAlias(scope)
+
+  private val _scalaNamedTupleAlias = cachedWithoutModificationCount(
+    "scalaNamedTupleAlias",
+    ValueWrapper.SofterReference,
+    clearCacheOnTopLevelChange,
+    (scope: GlobalSearchScope) => getStableAliasesByFqn("scala.NamedTuple.NamedTuple", scope).headOption
+  )
+
   def getJavaPackageClassNames(psiPackage: PsiPackage, scope: GlobalSearchScope): Set[String] = {
     if (DumbService.getInstance(project).isDumb) return Set.empty
     getJavaPackageClassNamesCached(psiPackage, scope)

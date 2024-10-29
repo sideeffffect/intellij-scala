@@ -19,7 +19,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScObject, ScTy
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.{ScDesignatorType, ScProjectionType, ScThisType}
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.TypePresentation.ABSTRACT_TYPE_POSTFIX
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.{NameRenderer, TypeBoundsRenderer, TypePresentation, TypeRenderer}
-import org.jetbrains.plugins.scala.lang.psi.types.api.{ContextFunctionType, FunctionType, ParameterizedType, StdType, TupleType, TypeParameter, TypeParameterType, WildcardType}
+import org.jetbrains.plugins.scala.lang.psi.types.api.{ContextFunctionType, FunctionType, NamedTupleType, ParameterizedType, StdType, TupleType, TypeParameter, TypeParameterType, WildcardType}
 import org.jetbrains.plugins.scala.lang.psi.types.nonvalue.{ScMethodType, ScTypePolymorphicType}
 import org.jetbrains.plugins.scala.lang.psi.types.recursiveUpdate.ScSubstitutor
 import org.jetbrains.plugins.scala.lang.psi.types.{ScAbstractType, ScAndType, ScCompoundType, ScExistentialArgument, ScExistentialType, ScLiteralType, ScMatchType, ScOrType, ScType, TypePresentationContext}
@@ -73,6 +73,8 @@ private [documentationProvider] class ScalaDocTypeRenderer(
       s"$renderedThis.$renderedType"
     case TupleType(comps) if !typ.isAliasType =>
       typesText(comps, Model.Parentheses)
+    case nt@NamedTupleType(comps) if NamedTupleType.isUnaliasedNamedTupleType(nt) =>
+      comps.map { case (name, compTy) => s"${NamedTupleType.NameType.from(name).getOrElse(render(name))}: ${render(compTy)}" }.commaSeparated(Model.Parentheses)
     case ScDesignatorType(element) =>
       nameRenderer.renderName(element)
     case p: ParameterizedType =>

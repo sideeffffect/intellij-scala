@@ -391,12 +391,18 @@ object ScalaIndentProcessor extends ScalaTokenTypes {
         }
       case _: ScParenthesisedExpr | _: ScParenthesisedPattern | _: ScParenthesisedExpr =>
         Indent.getContinuationWithoutFirstIndent(settings.ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION)
-      case _: ScTuple | _: ScUnitExpr =>
+      case _: ScTuple | _: ScNamedTuple | _: ScNamedTupleTypeElement | _: ScUnitExpr =>
         if (scalaSettings.DO_NOT_INDENT_TUPLES_CLOSE_BRACE && childElementType == ScalaTokenTypes.tRPARENTHESIS) {
           Indent.getSpaceIndent(0, scalaSettings.ALIGN_TUPLE_ELEMENTS)
         } else {
           Indent.getContinuationWithoutFirstIndent(scalaSettings.ALIGN_TUPLE_ELEMENTS)
         }
+      case _: ScNamedTupleExprComponent =>
+        assignmentIndent
+      case _: ScNamedTuplePatternComponent =>
+        val isLeft = childPsi.getPrevSibling == null
+        if (isLeft) Indent.getNoneIndent
+        else Indent.getNormalIndent
       case _: ScTypeParamClause  if scalaSettings.INDENT_TYPE_PARAMETERS =>
         if (childElementType == ScalaTokenTypes.tRSQBRACKET) {
           Indent.getNoneIndent

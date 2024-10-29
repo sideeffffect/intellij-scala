@@ -63,6 +63,16 @@ object SimplePattern extends ParsingRule {
             return true
           case _ =>
         }
+        if (parseNamedTuplePatternComponents()) {
+          if (builder.getTokenType == ScalaTokenTypes.tRPARENTHESIS) {
+            builder.advanceLexer()
+          } else {
+            builder.error(ScalaBundle.message("rparenthesis.expected"))
+          }
+          builder.restoreNewlinesState()
+          simplePatternMarker.done(ScalaElementType.NAMED_TUPLE_PATTERN)
+          return true
+        }
         if (Patterns()) {
           builder.getTokenType match {
             case ScalaTokenTypes.tRPARENTHESIS =>
@@ -247,5 +257,38 @@ object SimplePattern extends ParsingRule {
       simplePatternMarker.rollbackTo()
       false
     }
+  }
+
+  private def parseNamedTuplePatternComponents()(implicit builder: ScalaPsiBuilder): Boolean = {
+    if (!builder.features.`named tuples` || !builder.lookAhead(ScalaTokenTypes.tIDENTIFIER, ScalaTokenTypes.tASSIGN)) {
+      return false
+    }
+
+    def parseComponent(): Boolean = {
+      val compMarker = builder.mark()
+      if (builder.getTokenType == ScalaTokenTypes.tIDENTIFIER) {
+        builder.advanceLexer()
+      } else {
+        builder.error(ScalaBundle.message("identifier.expected"))
+      }
+
+      if (builder.getTokenType == ScalaTokenTypes.tASSIGN) {
+        builder.advanceLexer()
+      } else {
+        builder.error(ScalaBundle.message("assignment.expected"))
+      }
+
+      try Pattern()
+      finally compMarker.done(ScalaElementType.NAMED_TUPLE_PATTERN_COMPONENT)
+    }
+
+    while (
+      builder.getTokenType != ScalaTokenTypes.tRPARENTHESIS &&
+      parseComponent() &&
+      builder.getTokenType == ScalaTokenTypes.tCOMMA
+    ) {
+      builder.advanceLexer()
+    }
+    true
   }
 }

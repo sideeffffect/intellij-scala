@@ -7,21 +7,22 @@ import com.intellij.psi.impl.light.LightMethod
 import com.intellij.psi.scope.{ElementClassHint, NameHint, PsiScopeProcessor}
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiTreeUtil.isContextAncestor
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil._
 import org.jetbrains.plugins.scala.lang.psi.api.PropertyMethods._
 import org.jetbrains.plugins.scala.lang.psi.api.statements._
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScClassParameter
-import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScTypedDefinition
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef._
-import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiManager
+import org.jetbrains.plugins.scala.lang.psi.api.toplevel.{ScNamedElement, ScTypedDefinition}
+import org.jetbrains.plugins.scala.lang.psi.impl.{ScalaPsiElementFactory, ScalaPsiManager}
 import org.jetbrains.plugins.scala.lang.psi.types._
-import org.jetbrains.plugins.scala.lang.psi.types.api.StdType
+import org.jetbrains.plugins.scala.lang.psi.types.api.{NamedTupleType, ParameterizedType, StdType}
 import org.jetbrains.plugins.scala.lang.psi.types.result._
 import org.jetbrains.plugins.scala.lang.refactoring.util.ScalaNamesUtil
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveState.ResolveStateExt
 import org.jetbrains.plugins.scala.lang.resolve.processor._
-import org.jetbrains.plugins.scala.project.ProjectContext
+import org.jetbrains.plugins.scala.project.{ProjectContext, ScalaFeatures}
 import org.jetbrains.plugins.scala.util.UnloadableThreadLocal
 
 import java.{util => ju}
@@ -157,6 +158,7 @@ object TypeDefinitionMembers {
     clazz:      PsiClass,
     processor:  PsiScopeProcessor,
     state:      ResolveState,
+    @Nullable
     lastParent: PsiElement,
     place:      PsiElement
   ): Boolean = {
@@ -205,6 +207,7 @@ object TypeDefinitionMembers {
   def processSuperDeclarations(td: ScTemplateDefinition,
                                processor: PsiScopeProcessor,
                                state: ResolveState,
+                               @Nullable
                                lastParent: PsiElement,
                                place: PsiElement): Boolean = {
 
@@ -220,6 +223,7 @@ object TypeDefinitionMembers {
   def processDeclarations(comp: ScCompoundType,
                           processor: PsiScopeProcessor,
                           state: ResolveState,
+                          @Nullable
                           lastParent: PsiElement,
                           place: PsiElement): Boolean = {
 
@@ -239,6 +243,7 @@ object TypeDefinitionMembers {
     tpe:        ScAndType,
     processor:  PsiScopeProcessor,
     state:      ResolveState,
+    @Nullable
     lastParent: PsiElement,
     place:      PsiElement
   ): Boolean = {
@@ -432,19 +437,19 @@ object TypeDefinitionMembers {
   }
 
   private def shouldProcessJavaInnerClasses(processor: PsiScopeProcessor): Boolean = {
-    if (processor.isInstanceOf[BaseProcessor]) return false
+    if (processor.is[BaseProcessor]) return false
     val hint = processor.getHint(ElementClassHint.KEY)
     hint == null || hint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)
   }
 
   private def mayProcessTypeSignature(processor: PsiScopeProcessor, typeSignature: TypeSignature): Boolean = {
-    if (processor.isInstanceOf[BaseProcessor]) true
-    else typeSignature.namedElement.isInstanceOf[ScTypeDefinition]
+    if (processor.is[BaseProcessor]) true
+    else typeSignature.namedElement.is[ScTypeDefinition]
   }
 
   def processEnum(clazz: PsiClass, process: PsiMethod => Boolean): Boolean = {
     var containsValues = false
-    if (clazz.isEnum && !clazz.isInstanceOf[ScTemplateDefinition]) {
+    if (clazz.isEnum && !clazz.is[ScTemplateDefinition]) {
       containsValues = clazz.getMethods.exists {
         method =>
           method.getName == "values" && method.getParameterList.getParametersCount == 0 && isStaticJava(method)
@@ -470,6 +475,39 @@ object TypeDefinitionMembers {
     true
   }
 
+  def processNamedTuple(p: ParameterizedType, execute: PsiElement => Boolean): Boolean = {
+    // Components of named tuples can be accessed in reference expressions via their names, even though
+    // there are no physical accessor methods. Rather, the compiler rewrites these accesses to the
+    // corresponding component index. We just link to the component that is referenced in its name literal
+    // or synthesize a dummy method.
+    p match {
+      case NamedTupleType(comps) =>
+        comps.forall {
+          case (lit@NamedTupleType.NameType(name), typ) =>
+            lit.psiElement match {
+              case Some(named: ScNamedElement) =>
+                execute(named)
+              case navigationElement =>
+                val property = ScalaPsiElementFactory.createMethodFromText(
+                  text = s"def $name: ${typ.canonicalText}",
+                  features = ScalaFeatures.defaultScala3,
+                )(p.projectContext)
+
+                navigationElement.foreach {
+                  // This enables navigation to "a" in `NamedTuple[("a", "b"), (Int, Int)](???)`
+                  property.syntheticNavigationElement = _
+                }
+
+                execute(property)
+            }
+          case _ =>
+            true
+        }
+      case _ =>
+        true
+    }
+  }
+
   private def signaturesFromCompanion(clazz: PsiClass, withSupers: Boolean): TermNodes.Map = {
     clazz match {
       case td: ScTypeDefinition =>
@@ -483,7 +521,7 @@ object TypeDefinitionMembers {
 
   private def processSyntheticAnyRefAndAny(processor: PsiScopeProcessor,
                                            state: ResolveState,
-                                           lastParent: PsiElement,
+                                           @Nullable lastParent: PsiElement,
                                            place: PsiElement): Boolean = {
     implicit val context: ProjectContext = place
 
@@ -494,7 +532,7 @@ object TypeDefinitionMembers {
   private def processSyntheticClass(stdType: StdType,
                                     processor: PsiScopeProcessor,
                                     state: ResolveState,
-                                    lastParent: PsiElement,
+                                    @Nullable lastParent: PsiElement,
                                     place: PsiElement): Boolean = {
     stdType.syntheticClass.forall(_.processDeclarations(processor, state, lastParent, place))
   }
@@ -519,7 +557,7 @@ object TypeDefinitionMembers {
   }
 
   private object stdLibPatches {
-    val map = Map(
+    private val map = Map(
       "scala.Predef" -> "scala.runtime.stdLibPatches.Predef",
       "scala.language" -> "scala.runtime.stdLibPatches.language"
     )

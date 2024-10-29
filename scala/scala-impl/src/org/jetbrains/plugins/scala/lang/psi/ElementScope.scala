@@ -3,7 +3,8 @@ package org.jetbrains.plugins.scala.lang.psi
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.{PsiClass, PsiElement}
-import org.jetbrains.plugins.scala.extensions.{ArrayExt, OptionExt, PsiElementExt}
+import org.jetbrains.plugins.scala.extensions.{ArrayExt, ObjectExt, OptionExt, PsiElementExt}
+import org.jetbrains.plugins.scala.lang.psi.api.statements.ScTypeAlias
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScObject, ScTrait}
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiManager
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.ScDesignatorType
@@ -16,7 +17,7 @@ case class ElementScope(project: Project, scope: GlobalSearchScope) {
 
   def getCachedClass(fqn: String): Option[PsiClass] =
     getCachedClasses(fqn).find {
-      !_.isInstanceOf[ScObject]
+      !_.is[ScObject]
     }
 
   def getCachedObject(fqn: String): Option[ScObject] =
@@ -42,6 +43,9 @@ case class ElementScope(project: Project, scope: GlobalSearchScope) {
 
   def scalaSeqType: Option[ScType] =
     manager.scalaSeqAlias(scope).map(ScDesignatorType.apply)
+
+  def scalaNamedTupleType: Option[ScTypeAlias] =
+    manager.scalaNamedTupleAlias(scope)
 
   private def manager =
     ScalaPsiManager.instance(project)

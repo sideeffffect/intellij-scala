@@ -994,7 +994,7 @@ package object extensions {
       project.typeSystem.toScType(`type`, treatJavaObjectAsAny, paramTopLevel)
   }
 
-  implicit class PsiMemberExt(val member: PsiMember) extends AnyVal {
+  implicit class PsiMemberExt(private val member: PsiMember) extends AnyVal {
     /**
       * Second match branch is for Java only.
       */

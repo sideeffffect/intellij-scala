@@ -112,17 +112,18 @@ class TypeParserTest extends SimpleScala3ParserTestBase {
       |    PsiWhiteSpace(' ')
       |    PsiElement(=)('=')
       |    PsiWhiteSpace(' ')
-      |    TupleType: (name: String, age: Int)
+      |    NamedTupleType: (name: String, age: Int)
       |      PsiElement(()('(')
-      |      TypesList
+      |      NamedTupleTypeComponent: name: String
       |        PsiElement(identifier)('name')
       |        PsiElement(:)(':')
       |        PsiWhiteSpace(' ')
       |        SimpleType: String
       |          CodeReferenceElement: String
       |            PsiElement(identifier)('String')
-      |        PsiElement(,)(',')
-      |        PsiWhiteSpace(' ')
+      |      PsiElement(,)(',')
+      |      PsiWhiteSpace(' ')
+      |      NamedTupleTypeComponent: age: Int
       |        PsiElement(identifier)('age')
       |        PsiElement(:)(':')
       |        PsiWhiteSpace(' ')
@@ -149,11 +150,10 @@ class TypeParserTest extends SimpleScala3ParserTestBase {
       |    PsiWhiteSpace(' ')
       |    PsiElement(=)('=')
       |    PsiWhiteSpace(' ')
-      |    Tuple
+      |    NamedTuple
       |      PsiElement(()('(')
-      |      AssignStatement
-      |        ReferenceExpression: name
-      |          PsiElement(identifier)('name')
+      |      ScNamedTupleExprComponentImpl(named tuple component)
+      |        PsiElement(identifier)('name')
       |        PsiWhiteSpace(' ')
       |        PsiElement(=)('=')
       |        PsiWhiteSpace(' ')
@@ -161,9 +161,8 @@ class TypeParserTest extends SimpleScala3ParserTestBase {
       |          PsiElement(string content)('"Bob"')
       |      PsiElement(,)(',')
       |      PsiWhiteSpace(' ')
-      |      AssignStatement
-      |        ReferenceExpression: age
-      |          PsiElement(identifier)('age')
+      |      ScNamedTupleExprComponentImpl(named tuple component)
+      |        PsiElement(identifier)('age')
       |        PsiWhiteSpace(' ')
       |        PsiElement(=)('=')
       |        PsiWhiteSpace(' ')
@@ -181,17 +180,18 @@ class TypeParserTest extends SimpleScala3ParserTestBase {
       |      CaseClause
       |        PsiElement(case)('case')
       |        PsiWhiteSpace(' ')
-      |        TuplePattern
+      |        NamedTuplePattern
       |          PsiElement(()('(')
-      |          ArgumentPatterns
+      |          ScNamedTuplePatternComponentImpl(named tuple pattern component)
       |            PsiElement(identifier)('name')
       |            PsiWhiteSpace(' ')
       |            PsiElement(=)('=')
       |            PsiWhiteSpace(' ')
       |            ReferencePattern: x
       |              PsiElement(identifier)('x')
-      |            PsiElement(,)(',')
-      |            PsiWhiteSpace(' ')
+      |          PsiElement(,)(',')
+      |          PsiWhiteSpace(' ')
+      |          ScNamedTuplePatternComponentImpl(named tuple pattern component)
       |            PsiElement(identifier)('age')
       |            PsiWhiteSpace(' ')
       |            PsiElement(=)('=')

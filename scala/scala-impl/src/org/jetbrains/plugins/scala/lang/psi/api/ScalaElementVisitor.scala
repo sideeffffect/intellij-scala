@@ -2,7 +2,7 @@ package org.jetbrains.plugins.scala.lang.psi.api
 
 import com.intellij.psi.{PsiElementVisitor, PsiFile, PsiRecursiveVisitor}
 import org.jetbrains.plugins.scala.lang.psi.api.base._
-import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScCaseClause, ScCaseClauses, ScPattern, ScPatternArgumentList}
+import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.{ScCaseClause, ScCaseClauses, ScNamedTuplePattern, ScPattern, ScPatternArgumentList}
 import org.jetbrains.plugins.scala.lang.psi.api.base.types._
 import org.jetbrains.plugins.scala.lang.psi.api.expr._
 import org.jetbrains.plugins.scala.lang.psi.api.expr.xml.{ScXmlEndTag, ScXmlStartTag}
@@ -158,6 +158,8 @@ abstract class ScalaElementVisitor extends PsiElementVisitor {
   def visitNewTemplateDefinition(templ: ScNewTemplateDefinition): Unit = visitExpression(templ)
   def visitTypedExpr(stmt: ScTypedExpression): Unit = visitExpression(stmt)
   def visitTuple(tuple: ScTuple): Unit = visitExpression(tuple)
+  def visitNamedTuple(tuple: ScNamedTuple): Unit = visitExpression(tuple)
+  def visitNamedTuplePattern(pattern: ScNamedTuplePattern) = visitPattern(pattern)
   def visitBlockExpression(block: ScBlockExpr): Unit = visitExpression(block)
   def visitUnderscoreExpression(under: ScUnderscoreSection): Unit = visitExpression(under)
   def visitConstrBlockExpr(constr: ScConstrBlockExpr): Unit = visitBlockExpression(constr)
@@ -171,6 +173,7 @@ abstract class ScalaElementVisitor extends PsiElementVisitor {
   // TODO visitReference
   def visitTypeProjection(proj: ScTypeProjection): Unit = {}
   def visitTupleTypeElement(tuple: ScTupleTypeElement): Unit = visitTypeElement(tuple)
+  def visitNamedTupleTypeElement(tuple: ScNamedTupleTypeElement): Unit = visitTypeElement(tuple)
   def visitParenthesisedTypeElement(parenthesised: ScParenthesisedTypeElement): Unit = visitTypeElement(parenthesised)
   def visitParameterizedTypeElement(parameterized: ScParameterizedTypeElement): Unit = visitTypeElement(parameterized)
   def visitInfixTypeElement(infix: ScInfixTypeElement): Unit = visitTypeElement(infix)

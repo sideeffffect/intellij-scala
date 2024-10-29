@@ -1,10 +1,11 @@
 package org.jetbrains.plugins.scala.lang.formatter.intellij.tests
 
+import org.jetbrains.plugins.scala.{LatestScalaVersions, ScalaVersion}
 import org.jetbrains.plugins.scala.lang.formatter.AbstractScalaFormatterTestBase
 import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings.TrailingCommaMode
 import org.jetbrains.plugins.scala.lang.formatting.settings.TrailingCommaPanel
 
-class TrailingCommaTest extends AbstractScalaFormatterTestBase {
+abstract class TrailingCommaTestBase extends AbstractScalaFormatterTestBase {
 
   override protected def setUp(): Unit = {
     super.setUp()
@@ -12,7 +13,10 @@ class TrailingCommaTest extends AbstractScalaFormatterTestBase {
     scalaSettings.TRAILING_COMMA_ARG_LIST_ENABLED = true
     scalaSettings.TRAILING_COMMA_PARAMS_ENABLED = true
     scalaSettings.TRAILING_COMMA_TUPLE_ENABLED = true
+    scalaSettings.TRAILING_COMMA_NAMED_TUPLE_ENABLED = true
     scalaSettings.TRAILING_COMMA_TUPLE_TYPE_ENABLED = true
+    scalaSettings.TRAILING_COMMA_NAMED_TUPLE_TYPE_ENABLED = true
+    scalaSettings.TRAILING_COMMA_NAMED_TUPLE_PATTERN_ENABLED = true
     scalaSettings.TRAILING_COMMA_PATTERN_ARG_LIST_ENABLED = true
     scalaSettings.TRAILING_COMMA_TYPE_PARAMS_ENABLED = true
     scalaSettings.TRAILING_COMMA_IMPORT_SELECTOR_ENABLED = true
@@ -50,6 +54,21 @@ class TrailingCommaTest extends AbstractScalaFormatterTestBase {
         |  2
         |)
         |
+        |(1, 2, 3, )
+        |(1, 2, 3)
+        |(
+        |  1,
+        |  2,
+        |)
+        |(
+        |  1,
+        |  2
+        |)
+        |
+        |x: (Int, Int, )
+        |y: (Int, Int,
+        |  )
+        |
         |def foo(f: (Int, String,
         |  ) => Long) = ???
         |
@@ -59,7 +78,7 @@ class TrailingCommaTest extends AbstractScalaFormatterTestBase {
     doTextTest(before)
   }
 
-  private def testAddRemove(withoutComma: String, withComma: String): Unit = {
+  protected def testAddRemove(withoutComma: String, withComma: String): Unit = {
     getScalaSettings.TRAILING_COMMA_MODE = TrailingCommaMode.TRAILING_COMMA_ADD_WHEN_MULTILINE
     doTextTest(withoutComma, withComma)
 
@@ -137,20 +156,20 @@ class TrailingCommaTest extends AbstractScalaFormatterTestBase {
 
   def testAddRemove_Tuple(): Unit = testAddRemove(
     withoutComma =
-      """val tuple: (Int, Int) = (1, 2, 3
+      """val tuple = (1, 2, 3
         |)""".stripMargin,
     withComma =
-      """val tuple: (Int, Int) = (1, 2, 3,
+      """val tuple = (1, 2, 3,
         |)""".stripMargin
   )
 
   def testAddRemove_TupleType(): Unit = testAddRemove(
     withoutComma =
-      """def foo(f: (Int, String
-        |  ) => Long) = ???""".stripMargin,
+      """val tuple: (Int, Int
+        |  )""".stripMargin,
     withComma =
-      """def foo(f: (Int, String,
-        |  ) => Long) = ???""".stripMargin
+      """val tuple: (Int, Int,
+        |  )""".stripMargin
   )
 
   def testAddRemove_ImportStatementWithSelectors(): Unit = testAddRemove(
@@ -342,4 +361,67 @@ class TrailingCommaTest extends AbstractScalaFormatterTestBase {
         |import org.example._,""".stripMargin
     doTextTest(before, after)
   }
+}
+
+class TrailingCommaTest_Scala2 extends TrailingCommaTestBase {
+  override def version: ScalaVersion = LatestScalaVersions.Scala_2_13
+}
+
+class TrailingCommaTest_Scala3 extends TrailingCommaTestBase {
+  override def version: ScalaVersion = LatestScalaVersions.Scala_3_5
+
+
+  def testKeep_NamedTuple(): Unit = {
+    getScalaSettings.TRAILING_COMMA_MODE = TrailingCommaMode.TRAILING_COMMA_KEEP
+    val before =
+      """
+        |(x = 1)
+        |(x = 1, )
+        |(
+        |  x = 1,
+        |  y = 2
+        |)
+        |(
+        |  x = 1,
+        |  y = 2,
+        |)
+        |
+        |
+        |x: (a: Int, b: Int, )
+        |y: (a: Int, b: Int,
+        |)
+        |
+        |val (x = x, y = _, ) = ???
+        |val (x = x, y = 1,
+        |  ) = ???
+      """.stripMargin
+    doTextTest(before)
+  }
+
+  def testAddRemove_NamedTuple(): Unit = testAddRemove(
+    withoutComma =
+      """val tuple: (x: Int, y: Int) = (x = 1, y = 2
+        |)""".stripMargin,
+    withComma =
+      """val tuple: (x: Int, y: Int) = (x = 1, y = 2,
+        |)""".stripMargin
+  )
+
+  def testAddRemove_NamedTupleType(): Unit = testAddRemove(
+    withoutComma =
+      """def foo(f: (x: Int, y: String
+        |)) = ???""".stripMargin,
+    withComma =
+      """def foo(f: (x: Int, y: String,
+        |)) = ???""".stripMargin
+  )
+
+  def testAddRemove_NamedTuplePattern(): Unit = testAddRemove(
+    withoutComma =
+      """val (x = x, y = _
+        |  ) = ???""".stripMargin,
+    withComma =
+      """val (x = x, y = _,
+        |  ) = ???""".stripMargin,
+  )
 }

@@ -12,12 +12,13 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.{PsiDocumentManager, PsiElement, PsiFile, PsiFileFactory}
 import com.intellij.testFramework.LightIdeaTestCase
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.scala.extensions.{CharSeqExt, IteratorExt, PsiElementExt, StringExt, inWriteAction}
 import org.jetbrains.plugins.scala.lang.formatter.AbstractScalaFormatterTestBase._
 import org.jetbrains.plugins.scala.lang.formatting.scalafmt.processors.ScalaFmtPreFormatProcessor
 import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings
 import org.jetbrains.plugins.scala.util.{MarkersUtils, TestUtils}
-import org.jetbrains.plugins.scala.{LatestScalaVersions, Scala3Language, ScalaLanguage, ScalaVersion}
+import org.jetbrains.plugins.scala.{LatestScalaVersions, NlsString, Scala3Language, ScalaLanguage, ScalaVersion}
 import org.junit.Assert._
 
 import java.io.File
@@ -153,7 +154,7 @@ abstract class AbstractScalaFormatterTestBase extends LightIdeaTestCase {
         val expected = prepareText(textClean)
         val documentText = prepareText(document.getText)
         if (checkResult) {
-          val errorMessage = s"Wrong formatting for range ${range} (range text: ${range.substring(textClean)})"
+          val errorMessage = s"Wrong formatting for range $range (range text: ${range.substring(textClean)})"
           assertEquals(errorMessage, expected, documentText)
 
           manager.commitDocument(document)
@@ -205,7 +206,7 @@ abstract class AbstractScalaFormatterTestBase extends LightIdeaTestCase {
 
     val file = initFile(fileName, textBefore)
     val manager  = PsiDocumentManager.getInstance(getProject)
-    val document = manager.getDocument(file)ensuring(_ != null, "Don't expect the document to be null")
+    val document = manager.getDocument(file).ensuring(_ != null, "Don't expect the document to be null")
 
     def check(expected: String): Unit = {
       val expected2 = prepareText(expected)
@@ -244,8 +245,8 @@ abstract class AbstractScalaFormatterTestBase extends LightIdeaTestCase {
     doc.getText
   }
 
-  private def runCommandInWriteAction(runnable: Runnable, name: String, groupId: String): Unit = {
-    WriteCommandAction.runWriteCommandAction(getProject, name, groupId, runnable)
+  private def runCommandInWriteAction(runnable: Runnable, name: String, @Nullable groupId: String): Unit = {
+    WriteCommandAction.runWriteCommandAction(getProject, NlsString.force(name), groupId, runnable)
   }
 
   protected val RightMarginMarker = "!"

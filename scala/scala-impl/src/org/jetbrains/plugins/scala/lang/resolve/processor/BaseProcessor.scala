@@ -112,7 +112,7 @@ abstract class BaseProcessor(val kinds: Set[ResolveTargets.Value])
   }
 
   //java compatibility
-  object MyElementClassHint extends ElementClassHint {
+  private object MyElementClassHint extends ElementClassHint {
     import com.intellij.psi.scope.ElementClassHint.DeclarationKind
     override def shouldProcess(kind: DeclarationKind): Boolean = {
       kind match {
@@ -201,7 +201,7 @@ abstract class BaseProcessor(val kinds: Set[ResolveTargets.Value])
               processTypeImpl(glb, place, newState)
             }
         }
-      case d@ScDesignatorType(e: PsiClass) if d.isStatic && !e.isInstanceOf[ScTemplateDefinition] =>
+      case d@ScDesignatorType(e: PsiClass) if d.isStatic && !e.is[ScTemplateDefinition] =>
         //not scala from scala
         var break = true
         for (method <- e.getMethods if break && method.hasModifierProperty("static")) {
@@ -217,7 +217,7 @@ abstract class BaseProcessor(val kinds: Set[ResolveTargets.Value])
         processEnum(e, execute(_, state))
       case ScDesignatorType(o: ScObject) =>
         processElement(o, ScSubstitutor.empty, place, state)
-      case ScDesignatorType(e: ScTypedDefinition) if place.isInstanceOf[ScTypeProjection] =>
+      case ScDesignatorType(e: ScTypedDefinition) if place.is[ScTypeProjection] =>
         val result: TypeResult =
           e match {
             case p: ScParameter => p.getRealParameterType
@@ -233,7 +233,7 @@ abstract class BaseProcessor(val kinds: Set[ResolveTargets.Value])
         implicit val elementScope: ElementScope = place.elementScope
         processTypeImpl(j.getParameterizedType.getOrElse(return true), place, state)
       case p@ParameterizedType(designator, typeArgs) =>
-        designator match {
+        val cont = designator match {
           case tpt: TypeParameterType =>
             if (recState.visitedTypeParameter.contains(tpt)) return true
             val newState = state.withSubstitutor(ScSubstitutor(p))
@@ -244,12 +244,16 @@ abstract class BaseProcessor(val kinds: Set[ResolveTargets.Value])
               else                               p.substitutor(ParameterizedType(tpt.upperType, typeArgs))
 
             processTypeImpl(substedType, place, newState)(recState.add(tpt))
-          case _ => p.extractDesignatedType(expandAliases = false) match {
-            case Some((des, subst)) =>
-              processElement(des, subst, place, state)
-            case None => true
-          }
+          case _ =>
+            p.extractDesignatedType(expandAliases = false) match {
+              case Some((des, subst)) =>
+                processElement(des, subst, place, state)
+              case None =>
+                true
+            }
         }
+
+        cont && processNamedTuple(p, execute(_, state))
       case proj: ScProjectionType =>
         val withActual = new ScProjectionType.withActual(updateWithProjectionSubst)
         proj match {

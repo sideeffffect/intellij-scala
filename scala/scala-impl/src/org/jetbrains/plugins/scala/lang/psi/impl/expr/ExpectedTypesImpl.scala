@@ -114,7 +114,7 @@ class ExpectedTypesImpl extends ExpectedTypes {
    *       (this last case is not actually working due to a bug in scalac ¯\_(ツ)_/¯ https://github.com/scala/bug/issues/11703)
    * */
   import FunctionTypeMarker._
-  case class FunctionLikeTpe(
+  private case class FunctionLikeTpe(
     marker:    FunctionTypeMarker,
     resTpe:    ScType,
     paramTpes: Seq[ScType],
@@ -378,7 +378,7 @@ class ExpectedTypesImpl extends ExpectedTypes {
       }
       //see SLS[6.23]
       case f: ScFunctionExpr => f.expectedTypesEx(fromUnderscore = true).flatMap(fromFunction)
-      case t: ScTypedExpression if t.getLastChild.isInstanceOf[ScSequenceArg] =>
+      case t: ScTypedExpression if t.getLastChild.is[ScSequenceArg] =>
         t.expectedTypesEx(fromUnderscore = true)
       //SLS[6.13]
       case t: ScTypedExpression =>
@@ -389,8 +389,8 @@ class ExpectedTypesImpl extends ExpectedTypes {
       //SLS[6.15]
       case a: ScAssignment if a.rightExpression.getOrElse(null: ScExpression) == sameInContext =>
         a.leftExpression match {
-          case ref: ScReferenceExpression if (!a.getContext.isInstanceOf[ScArgumentExprList] && !(
-            a.getContext.isInstanceOf[ScInfixArgumentExpression] && a.getContext.asInstanceOf[ScInfixArgumentExpression].isCall)) ||
+          case ref: ScReferenceExpression if (!a.getContext.is[ScArgumentExprList] && !(
+            a.getContext.is[ScInfixArgumentExpression] && a.getContext.asInstanceOf[ScInfixArgumentExpression].isCall)) ||
             ref.qualifier.isDefined ||
             ScUnderScoreSectionUtil.isUnderscore(expr) /* See SCL-3512, SCL-3525, SCL-4809, SCL-6785 */ =>
             ref.bind() match {
@@ -428,7 +428,7 @@ class ExpectedTypesImpl extends ExpectedTypes {
       //method application
       case tuple: ScTuple if tuple.isCall => expectedTypesForArg(tuple.getContext.asInstanceOf[ScInfixExpr])
       case tuple: ScTuple =>
-        val buffer = new ArrayBuffer[ParameterType]
+        val result = Array.newBuilder[ParameterType]
         val exprs = tuple.exprs
         val index = exprs.indexOf(sameInContext)
         @tailrec
@@ -436,15 +436,37 @@ class ExpectedTypesImpl extends ExpectedTypes {
           aType match {
             case _: ScAbstractType => addType(aType.removeAbstracts)
             case TupleType(comps) if comps.length == exprs.length =>
-              buffer += ((comps(index), None))
+              result += ((comps(index), None))
             case _ =>
           }
         }
         if (index >= 0) {
-          for (tp: ScType <- tuple.expectedTypes(fromUnderscore = true)) addType(tp)
+          for (tp: ScType <- tuple.expectedTypes()) addType(tp)
         }
-        buffer.toArray
-      case infix@ScInfixExpr.withAssoc(_, _, `sameInContext`) if !expr.isInstanceOf[ScTuple] =>
+        result.result()
+      case comp: ScNamedTupleExprComponent =>
+        val tuple = comp.namedTuple
+        val result = Array.newBuilder[ParameterType]
+        val components = tuple.components
+        val index = components.indexOf(comp)
+        @tailrec
+        def addType(aType: ScType): Unit = {
+          aType match {
+            case _: ScAbstractType => addType(aType.removeAbstracts)
+            case NamedTupleType(expectedComps) if expectedComps.length == components.length =>
+              expectedComps(index) match {
+                case (NamedTupleType.NameType(expectedName), expectedType) if expectedName == comp.name =>
+                  result += expectedType -> None
+                case _ =>
+              }
+            case _ =>
+          }
+        }
+        if (index >= 0) {
+          for (tp: ScType <- tuple.expectedTypes()) addType(tp)
+        }
+        result.result()
+      case infix@ScInfixExpr.withAssoc(_, _, `sameInContext`) if !expr.is[ScTuple] =>
         expr match {
           case p: ScParenthesisedExpr if p.innerElement.isEmpty => return Array.empty
           case _ =>
@@ -505,13 +527,11 @@ class ExpectedTypesImpl extends ExpectedTypes {
         }
       case b: ScBlock if {
         val context = b.getContext
-        context.isInstanceOf[ScTry] ||
-          context.isInstanceOf[ScCaseClause] ||
-          context.isInstanceOf[ScFunctionExpr] ||
+        context.is[ScTry, ScCaseClause, ScFunctionExpr] ||
           //extra null checks are needed for some broken code, in order not to throw NPEs
           context != null && {
             val context2 = context.getContext
-            context2 != null && context2.getContext.isInstanceOf[ScCatchBlock]
+            context2 != null && context2.getContext.is[ScCatchBlock]
           }
       } =>
         b.resultExpression match {
@@ -717,7 +737,7 @@ class ExpectedTypesImpl extends ExpectedTypes {
 
   private def inheritedType(member: ScMember): Option[ScType] = {
     //is necessary to avoid recursion
-    if (member.getParent.isInstanceOf[ScEarlyDefinitions])
+    if (member.getParent.is[ScEarlyDefinitions])
       return None
 
     member match {
