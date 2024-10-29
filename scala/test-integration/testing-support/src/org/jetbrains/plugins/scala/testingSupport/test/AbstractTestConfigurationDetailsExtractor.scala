@@ -3,9 +3,9 @@ package org.jetbrains.plugins.scala.testingSupport.test
 import com.intellij.execution.configurations.ModuleBasedConfiguration
 import org.apache.commons.lang3.StringUtils
 import org.jetbrains.plugins.scala.testingSupport.test.testdata.{ClassTestData, TestConfigurationData}
-import org.jetbrains.sbt.project.extensionPoints.ModuleBasedConfigurationMainClassExtractor
+import org.jetbrains.sbt.project.extensionPoints.ModuleBasedConfigurationDetailsExtractor
 
-class AbstractTestConfigurationMainClassExtractor extends ModuleBasedConfigurationMainClassExtractor {
+class AbstractTestConfigurationDetailsExtractor extends ModuleBasedConfigurationDetailsExtractor {
 
   override def getConfigurationMainClass(config: ModuleBasedConfiguration[_, _]): Option[String] =
     config match {

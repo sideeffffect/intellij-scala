@@ -38,6 +38,6 @@
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij.sbt">
-        <configurationMainClassExtractor implementation="org.jetbrains.plugins.scala.testingSupport.test.AbstractTestConfigurationMainClassExtractor"/>
+        <configurationDetailsExtractor implementation="org.jetbrains.plugins.scala.testingSupport.test.AbstractTestConfigurationDetailsExtractor"/>
     </extensions>
 </idea-plugin>

@@ -14,7 +14,7 @@ import org.jetbrains.plugins.scala.extensions.inReadAction
 import org.jetbrains.plugins.scala.project.ModuleExt
 import org.jetbrains.sbt.{SbtBundle, SbtUtil}
 import org.jetbrains.sbt.project.SbtMigrateConfigurationsAction.{ModuleHeuristicResult, extractMainClassName, isConfigurationInvalid, logger}
-import org.jetbrains.sbt.project.extensionPoints.ModuleBasedConfigurationMainClassExtractor
+import org.jetbrains.sbt.project.extensionPoints.ModuleBasedConfigurationDetailsExtractor
 
 import scala.util.Try
 
@@ -182,7 +182,7 @@ object SbtMigrateConfigurationsAction {
   def extractMainClassName(config: ModuleBasedConfiguration[_, _]): String =
     config match {
       case x: ApplicationConfiguration => x.getMainClassName
-      case x: ModuleBasedConfiguration[_, _] => ModuleBasedConfigurationMainClassExtractor.getMainClass(x).orNull
+      case x: ModuleBasedConfiguration[_, _] => ModuleBasedConfigurationDetailsExtractor.getMainClass(x).orNull
       case _ => null
     }
 
