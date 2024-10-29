@@ -11,4 +11,10 @@ class JUnitConfigurationDetailsExtractor extends ModuleBasedConfigurationDetails
       case x: JUnitConfiguration => Option(x.getPersistentData.getMainClassName)
       case _ => None
     }
+
+  override def isTestConfiguration(config: ModuleBasedConfiguration[_, _]): Boolean =
+    config match {
+      case _: JUnitConfiguration => true
+      case _ => false
+    }
 }

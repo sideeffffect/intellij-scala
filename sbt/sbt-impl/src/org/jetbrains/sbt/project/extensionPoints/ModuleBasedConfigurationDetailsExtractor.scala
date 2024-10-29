@@ -7,6 +7,7 @@ import org.jetbrains.plugins.scala.ExtensionPointDeclaration
 @Internal
 trait ModuleBasedConfigurationDetailsExtractor {
   def getConfigurationMainClass(config: ModuleBasedConfiguration[_, _]): Option[String]
+  def isTestConfiguration(config: ModuleBasedConfiguration[_, _]): Boolean
 }
 
 object ModuleBasedConfigurationDetailsExtractor
@@ -16,5 +17,9 @@ object ModuleBasedConfigurationDetailsExtractor
     implementations
       .map(_.getConfigurationMainClass(config))
       .collectFirst { case Some(result) => result }
+
+  def isTestConfiguration(config: ModuleBasedConfiguration[_, _]): Boolean =
+    implementations
+      .exists(_.isTestConfiguration(config))
 
 }

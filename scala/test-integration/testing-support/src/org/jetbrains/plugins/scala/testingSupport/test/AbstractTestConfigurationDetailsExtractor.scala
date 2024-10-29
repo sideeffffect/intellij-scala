@@ -13,6 +13,12 @@ class AbstractTestConfigurationDetailsExtractor extends ModuleBasedConfiguration
       case _ => None
     }
 
+  override def isTestConfiguration(config: ModuleBasedConfiguration[_, _]): Boolean =
+    config match {
+      case _: AbstractTestRunConfiguration => true
+      case _ => false
+    }
+
   private def getMainClassFromConfigurationData(data: TestConfigurationData): Option[String] =
     data match {
       case data: ClassTestData =>
