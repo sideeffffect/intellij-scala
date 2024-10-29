@@ -9,5 +9,15 @@ class InlineRefactoringTypeAliasTest extends InlineRefactoringTestBase {
 
   def testMultiple(): Unit = doTest()
 
+  def testMultipleFromUsage(): Unit = doTest()
+
   def testStablePath(): Unit = doTest()
+
+  def testInlineAndKeep(): Unit = doTest()
+
+  def testInlineAndKeepMultiple(): Unit = doTest()
+
+  def testInlineAndKeepMultipleFromUsage(): Unit = doTest()
+
+  def testInlineOnlyCurrentUsage(): Unit = doTest()
 }

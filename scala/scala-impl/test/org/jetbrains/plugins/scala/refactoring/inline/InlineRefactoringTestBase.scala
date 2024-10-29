@@ -13,6 +13,7 @@ import org.jetbrains.plugins.scala.editor.DocumentExt
 import org.jetbrains.plugins.scala.extensions.StringExt
 import org.jetbrains.plugins.scala.refactoring.inline.InlineRefactoringTestBase.{ExpectedResult, SettingDescriptor, TestCaseDescriptor, TestCaseOptions, parseExpectedError}
 import org.jetbrains.plugins.scala.refactoring.refactoringCommonTestDataRoot
+import org.jetbrains.plugins.scala.settings.ScalaApplicationSettings
 import org.jetbrains.plugins.scala.util.TestUtils.ExpectedResultFromLastComment
 import org.jetbrains.plugins.scala.util.{RevertableChange, TestUtils}
 import org.jetbrains.plugins.scala.{ScalaBundle, ScalaFileType}
@@ -170,6 +171,9 @@ abstract class InlineRefactoringTestBase extends ScalaLightCodeInsightFixtureTes
         className match {
           case "ScalaCodeStyleSettings" =>
             val settingsInstance = getScalaCodeStyleSettings
+            createSettingDescriptor(settingsInstance, fieldName, value)
+          case "ScalaApplicationSettings" =>
+            val settingsInstance = ScalaApplicationSettings.getInstance
             createSettingDescriptor(settingsInstance, fieldName, value)
           case _ =>
             throw new AssertionError(s"Unexpected class name $className in option setter: $optionSetterString")

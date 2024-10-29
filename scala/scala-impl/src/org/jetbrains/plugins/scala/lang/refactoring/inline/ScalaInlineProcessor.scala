@@ -3,9 +3,10 @@ package org.jetbrains.plugins.scala.lang.refactoring.inline
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.module.UnloadedModuleDescription
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.psi.{PsiElement, PsiFile}
+import com.intellij.psi.{PsiElement, PsiFile, PsiReference}
 import com.intellij.refactoring.{BaseRefactoringProcessor, RefactoringBundle}
 import com.intellij.usageView.{UsageInfo, UsageViewBundle, UsageViewDescriptor, UsageViewUtil}
 import org.jetbrains.annotations.Nls
@@ -21,12 +22,15 @@ import org.jetbrains.plugins.scala.lang.psi.impl.search.ScalaOverridingMemberSea
 import org.jetbrains.plugins.scala.lang.refactoring.inline.ScalaInliner.InlineState
 import org.jetbrains.plugins.scala.util.MultilineStringUtil
 
+import java.util.{Collections => JCollections, Set => JSet}
 import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters.IterableHasAsScala
 
 abstract class ScalaInlineProcessor(
   element: ScalaPsiElement,
-  protected val shouldRemoveDefinition: Boolean = true
+  reference: Option[PsiReference],
+  inlineThisOnly: Boolean,
+  shouldRemoveDefinition: Boolean,
 )(
   implicit project: Project
 ) extends BaseRefactoringProcessor(project) {
@@ -49,6 +53,8 @@ abstract class ScalaInlineProcessor(
   }
 
   override def findUsages(): Array[UsageInfo] = {
+    if (inlineThisOnly) return reference.map(new UsageInfo(_)).toArray
+
     val usages = collection.mutable.HashSet.empty[UsageInfo]
 
     usages ++= ReferencesSearch.search(element, element.getUseScope).findAll().asScala.map(new UsageInfo(_))
@@ -92,7 +98,7 @@ abstract class ScalaInlineProcessor(
     val scalaInliner = new ScalaInliner
     modifiedMultilineStrings = scalaInliner.inlineUsages(usagesInReverseOrder, element)
 
-    if (shouldRemoveDefinition) {
+    if (shouldRemoveDefinition && !inlineThisOnly) {
       removeDefinition()
     }
   }
@@ -131,6 +137,10 @@ abstract class ScalaInlineProcessor(
       }
     }
   }
+
+  override def computeUnloadedModulesFromUseScope(descriptor: UsageViewDescriptor): JSet[UnloadedModuleDescription] =
+    if (inlineThisOnly) JCollections.emptySet
+    else super.computeUnloadedModulesFromUseScope(descriptor)
 
   final protected def removeElementWithNonSignificantSiblings(value: PsiElement): Unit = {
     val children = new ArrayBuffer[PsiElement]

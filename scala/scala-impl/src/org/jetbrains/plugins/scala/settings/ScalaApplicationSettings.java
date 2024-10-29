@@ -73,6 +73,14 @@ public class ScalaApplicationSettings implements PersistentStateComponent<ScalaA
 
   public boolean SUGGEST_TYPE_AWARE_HIGHLIGHTING_ENABLED = false;
 
+  // Inline
+  public boolean INLINE_METHOD_THIS = false;
+  public boolean INLINE_METHOD_KEEP = false;
+  public boolean INLINE_TYPE_ALIAS_THIS = false;
+  public boolean INLINE_TYPE_ALIAS_KEEP = false;
+  public boolean INLINE_VARIABLE_THIS = false;
+  public boolean INLINE_VARIABLE_KEEP = false;
+
   //MISC
   public boolean ASK_USE_LATEST_PLUGIN_BUILDS = true;
   public boolean ASK_PLATFORM_UPDATE = true;

@@ -14,6 +14,8 @@ class InlineRefactoringSimpleTest extends InlineRefactoringTestBase {
 
   def testMethodWithParentheses(): Unit = doTest()
 
+  def testMethodMultiple(): Unit = doTest()
+
   def testReferenceMethodCall(): Unit = doTest()
 
   def testComment(): Unit = doTest()
@@ -21,4 +23,20 @@ class InlineRefactoringSimpleTest extends InlineRefactoringTestBase {
   def testDocComment(): Unit = doTest()
 
   def testMultipleComments(): Unit = doTest()
+
+  def testInlineAndKeepMethod(): Unit = doTest()
+
+  def testInlineAndKeepMethodMultiple(): Unit = doTest()
+
+  def testInlineMethodMultipleFromUsage(): Unit = doTest()
+
+  def testInlineOnlyCurrentMethodUsage(): Unit = doTest()
+
+  def testInlineAndKeepVariable(): Unit = doTest()
+
+  def testInlineAndKeepVariableMultiple(): Unit = doTest()
+
+  def testInlineVariableMultipleFromUsage(): Unit = doTest()
+
+  def testInlineOnlyCurrentVariableUsage(): Unit = doTest()
 }
