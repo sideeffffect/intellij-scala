@@ -5,6 +5,10 @@ import org.jetbrains.plugins.scala.project.ScalaLanguageLevel
 import org.jetbrains.plugins.scala.util.HashBuilder._
 import org.jetbrains.sbt.MinorVersionGenerator
 
+/**
+ * @see [[project.ScalaFeatures]] - represents the set of all parser features, calculated from a scala version and compiler options)
+ * @see [[ScalaLanguageLevel]]
+ */
 final class ScalaVersion(
   val languageLevel: ScalaLanguageLevel,
   val minorSuffix: String

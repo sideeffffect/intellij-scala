@@ -6,11 +6,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.psi.{FilePropertyKey, FilePropertyKeyImpl, PsiFile}
 import com.intellij.util.indexing.IndexingDataKeys
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.scala.ScalaLanguage
 import org.jetbrains.plugins.scala.project.ScalaFeaturePusher.{SerializedScalaFeatures, isScalaLike}
+import org.jetbrains.plugins.scala.project.ScalaFeatures.SerializableScalaFeatures
 
 import scala.annotation.nowarn
 
@@ -58,6 +59,10 @@ object ScalaFeaturePusher {
 
   def getFeatures(file: VirtualFile): Option[ScalaFeatures] =
     Option(key.getPersistentValue(file)).map(ScalaFeatures.deserializeFromInt(_))
+
+  @TestOnly
+  def setFeatures(dir: VirtualFile, features: SerializableScalaFeatures): Unit =
+    key.setPersistentValue(dir, features.serializeToInt)
 
   @inline
   private def isScalaLike(file: VirtualFile): Boolean =

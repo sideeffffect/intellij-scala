@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.scala.project;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.scala.Scala3Language;
 import org.jetbrains.plugins.scala.ScalaLanguage;
@@ -11,6 +10,19 @@ import scala.math.Ordered;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
+/**
+ * Represents the "major" of the scala version (the first two numbers).
+ * <p/>
+ * Note, our terminology of "major" is slightly different from the official Scala 3 terminology.
+ * Scala 3 and Scala 2 use different naming for the versioning scheme:<br>
+ * In Scala 2 the major versions use the first two numbers: 2.10, 2.11, 2.12, 2.13. <br>
+ * In Scala 3 a semantic versioning scheme is used instead: major.minor.patch
+ * (see <a href="https://scala-lang.org/development/">details</a>).
+ * We still use the first two numbers for the convenience of our code base.
+ *
+ * @see org.jetbrains.plugins.scala.ScalaVersion
+ * @see org.jetbrains.plugins.scala.project.ScalaFeatures
+ */
 public enum ScalaLanguageLevel implements Ordered<ScalaLanguageLevel> {
 
     Scala_2_9("2.9"),
