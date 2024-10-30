@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.scala.text
 
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.Ref
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiPackage
 import com.intellij.testFramework.TestLoggerKt
@@ -17,7 +16,7 @@ import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiManager
 import org.jetbrains.plugins.scala.settings.ScalaApplicationSettings.{getInstance => ScalaApplicationSettings}
 import org.junit.Assert
 
-import scala.annotation.nowarn
+import scala.jdk.CollectionConverters.ListHasAsScala
 
 // SCL-21078
 abstract class TextToTextTestBase(dependencies: Seq[DependencyDescription],
@@ -74,14 +73,10 @@ abstract class TextToTextTestBase(dependencies: Seq[DependencyDescription],
     classes.zipWithIndex.foreach { case (cls, i) =>
       println(f"$i%04d/$total%s: ${cls.qualifiedName}")
 
-      val actual = try {
-        val ref = Ref.create[String]
-        TestLoggerKt.rethrowLoggedErrorsIn { () =>
-          ref.set(textOfCompilationUnit(cls))
-        }: @nowarn("cat=deprecation")
-        ref.get()
-      } catch {
-        case e: Throwable => e.toString
+      val actual = {
+        val text = textOfCompilationUnit(cls)
+        val errors = TestLoggerKt.getErrorLog.takeLoggedErrors()
+        if (errors.isEmpty) text else errors.asScala.map(_.toString).mkString("\n")
       }
 
       val expected = {
