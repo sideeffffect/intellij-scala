@@ -1,7 +1,7 @@
 <idea-plugin>
     <extensionPoints>
-        <extensionPoint qualifiedName="com.intellij.sbt.configurationMainClassExtractor"
-                        interface="org.jetbrains.sbt.project.extensionPoints.ModuleBasedConfigurationMainClassExtractor"
+        <extensionPoint qualifiedName="com.intellij.sbt.configurationDetailsExtractor"
+                        interface="org.jetbrains.sbt.project.extensionPoints.ModuleBasedConfigurationDetailsExtractor"
                         dynamic="true"/>
         <extensionPoint qualifiedName="com.intellij.newProjectWizard.scala.buildSystem" interface="org.jetbrains.sbt.project.template.wizard.buildSystem.BuildSystemScalaNewProjectWizard" dynamic="true"/>
         <extensionPoint qualifiedName="org.intellij.scala.sbtUnlinkedProjectAwareHelper" interface="org.jetbrains.sbt.project.SbtUnlinkedProjectAwareHelper" dynamic="true"/>

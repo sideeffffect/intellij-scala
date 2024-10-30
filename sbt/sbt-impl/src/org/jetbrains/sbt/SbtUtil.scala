@@ -1,7 +1,6 @@
 package org.jetbrains.sbt
 
-import com.intellij.execution.RunManager
-import com.intellij.execution.configurations.{ModuleBasedConfiguration, ParametersList, RunConfigurationModule}
+import com.intellij.execution.configurations.ParametersList
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.{DataNode, Key}
@@ -13,7 +12,7 @@ import com.intellij.util.net.{ProxyConfiguration, ProxyCredentialStore, ProxyCre
 import com.intellij.util.{EnvironmentUtil, SystemProperties}
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.scala.build.BuildReporter
-import org.jetbrains.plugins.scala.extensions.{IterableOnceExt, RichFile}
+import org.jetbrains.plugins.scala.extensions.RichFile
 import org.jetbrains.plugins.scala.project.Version
 import org.jetbrains.plugins.scala.util.{ExternalSystemUtil, JarManifestUtils}
 import org.jetbrains.sbt.Sbt.SbtModuleChildKeyInstance
@@ -28,7 +27,7 @@ import java.net.URI
 import java.util.Properties
 import java.util.jar.JarFile
 import scala.collection.mutable
-import scala.jdk.CollectionConverters.{CollectionHasAsScala, MapHasAsScala}
+import scala.jdk.CollectionConverters.MapHasAsScala
 import scala.util.Using
 
 object SbtUtil {
@@ -379,11 +378,6 @@ object SbtUtil {
    */
   def appendSuffixToModuleName(moduleName: String, inc: Int): String =
     moduleName + "~" + inc
-
-  def getAllModuleBasedConfigurationsInProject(project: Project): Iterable[ModuleBasedConfiguration[_ <: RunConfigurationModule, _]] = {
-    val allConfigurations = RunManager.getInstance(project).getAllConfigurationsList.asScala
-    allConfigurations.filterByType[ModuleBasedConfiguration[_ <: RunConfigurationModule, _]]
-  }
 
   implicit class EntityStorageOps(storage: EntityStorage) {
     def resolveOpt[T <: WorkspaceEntityWithSymbolicId](id: SymbolicEntityId[T]): Option[T] = Option(storage.resolve(id))

@@ -8,18 +8,54 @@ import com.intellij.uiDesigner.core.{GridConstraints, GridLayoutManager}
 
 import java.awt.{Dimension, Font}
 import javax.swing._
-import javax.swing.table.{DefaultTableCellRenderer, DefaultTableModel}
+import javax.swing.table.{DefaultTableCellRenderer, DefaultTableModel, TableCellEditor}
 import com.intellij.execution.configurations.{ModuleBasedConfiguration, RunConfigurationModule}
 import com.intellij.openapi.module.Module
+import com.intellij.ui.SortedComboBoxModel
 import org.jetbrains.sbt.SbtBundle
 import org.jetbrains.sbt.project.SbtMigrateConfigurationsAction.ModuleHeuristicResult
 
 import java.awt.event.MouseEvent
+import java.util.Comparator
 import scala.jdk.CollectionConverters.IterableHasAsJava
 
-class MigrateConfigurationsDialogWrapper(modules: Array[Module], configurationToModule: Map[ModuleBasedConfiguration[_, _], ModuleHeuristicResult]) extends DialogWrapper(true) {
+class MigrateConfigurationsDialogWrapper(modules: Seq[Module], configurationToModule: Map[ModuleBasedConfiguration[_, _], ModuleHeuristicResult]) extends DialogWrapper(true) {
+
+  private val jModules = modules.asJavaCollection
+  private val defaultModulesComboBoxText = SbtBundle.message("sbt.migrate.configurations.dialog.wrapper.default")
+
+  // It provides different cell editors for each cell with ModulesComboBox,
+  // allowing custom sorting in each cell to keep suggested modules on top.
+  private val configToComboBoxCellEditor = configurationToModule.view.mapValues { heuristicResult =>
+    createComboBoxCellEditor(heuristicResult.guesses)
+  }.toMap
+
+  private def createComboBoxCellEditor(namesToKeepOnTop: Seq[String]): DefaultCellEditor = {
+    // Creating a SortedComboBoxModel in this way and injecting it via javax.swing.JComboBox.setModel is a workaround,
+    // since ModulesComboBox does not directly provide a possibility to modify the default model using ModulesAlphaComparator.
+    val customModel = new SortedComboBoxModel(jModules, new ModulesPrioritizedComparator(namesToKeepOnTop))
+    val comboBox = new ModulesComboBox()
+    comboBox.setModel(customModel)
+    comboBox.setModules(jModules)
+    comboBox.allowEmptySelection(defaultModulesComboBoxText)
+    new DefaultCellEditor(comboBox)
+  }
 
   private val myTable = new JBTable() {
+    override def getCellEditor(row: Int, column: Int): TableCellEditor = {
+      lazy val defaultCellEditor = super.getCellEditor(row, column)
+      if (column == 2) getCellEditorForModulesComboBoxColumn(row, defaultCellEditor)
+      else defaultCellEditor
+    }
+
+    private def getCellEditorForModulesComboBoxColumn(row: Int, defaultValue: => TableCellEditor): TableCellEditor = {
+      val configurationOpt = findConfigInRow(row)
+      configurationOpt match {
+        case Some(config) => configToComboBoxCellEditor.getOrElse(config, defaultValue)
+        case None => defaultValue
+      }
+    }
+
     override def getToolTipText(event: MouseEvent): String = {
       // TODO The tooltip doesn't work when the user just clicks on it.
       //  In order for a tooltip to appear, the user has to move the mouse a little after clicking on it.
@@ -92,16 +128,8 @@ class MigrateConfigurationsDialogWrapper(modules: Array[Module], configurationTo
   }
 
   private def setUpSelectingModulesColumn(): Unit = {
-    val defaultText = SbtBundle.message("sbt.migrate.configurations.dialog.wrapper.default")
-
-    val comboBox = new ModulesComboBox()
-    comboBox.setModules(modules.toSeq.asJavaCollection)
-    comboBox.allowEmptySelection(defaultText)
-    val editor = new DefaultCellEditor(comboBox)
-
     val columnModel = myTable.getColumnModel.getColumn(2)
-    columnModel.setCellEditor(editor)
-    columnModel.setCellRenderer(new ModuleComboBoxColumnCellRenderer(defaultText))
+    columnModel.setCellRenderer(new ModuleComboBoxColumnCellRenderer(defaultModulesComboBoxText))
   }
 
   private def setUpConfigurationColumn(): Unit = {
@@ -149,6 +177,31 @@ class MigrateConfigurationsDialogWrapper(modules: Array[Module], configurationTo
     val isRowWithinRange = row >= 0 && row < configurationToModule.size
     if (isRowWithinRange) getValueAt[ModuleBasedConfiguration[_, _]](row, 0)
     else None
+  }
+}
+
+/**
+ * A comparator for modules that prioritizes specified modules before
+ * performing a case-insensitive alphabetical comparison based on their names.
+ *
+ * @param prioritizedElements a sequence of module names to prioritize.
+ */
+final class ModulesPrioritizedComparator(prioritizedElements: Seq[String]) extends Comparator[Module] {
+
+  override def compare(module1: Module, module2: Module): Int = {
+    // this part is taken from com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator
+    if (module1 == null && module2 == null) return 0
+    if (module1 == null) return -1
+    if (module2 == null) return 1
+
+    val module1Name = module1.getName
+    val module2Name = module2.getName
+
+    (prioritizedElements.contains(module1Name), prioritizedElements.contains(module2Name)) match {
+      case (true, false) => -1
+      case (false, true) => 1
+      case _  => module1Name.compareToIgnoreCase(module2Name)
+    }
   }
 }
 
