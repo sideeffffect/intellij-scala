@@ -1,4 +1,5 @@
 import CompilationCache.compilationCacheSettings
+import com.github.sbt.junit.jupiter.sbt.Import.JupiterKeys.junitJupiterVersion
 import kotlin.Keys.{kotlinRuntimeProvided, kotlinVersion, kotlincJvmTarget}
 import kotlin.KotlinPlugin
 import org.jetbrains.sbtidea.Keys.*
@@ -90,7 +91,8 @@ object Common {
       Dependencies.jetbrainsAnnotations % Provided,
       Dependencies.junit % Test,
       Dependencies.junitInterface % Test,
-      Dependencies.jupiterInterface % Test
+      Dependencies.jupiterInterface % Test,
+      Dependencies.jupiterParams(junitJupiterVersion.value) % Test,
     ),
   ) ++ projectDirectoriesSettings ++
     compilationCacheSettings
