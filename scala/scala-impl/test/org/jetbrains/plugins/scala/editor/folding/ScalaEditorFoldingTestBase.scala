@@ -113,7 +113,8 @@ abstract class ScalaEditorFoldingTestBase extends ScalaLightCodeInsightFixtureTe
 
     val actualFoldingInfos = regions.map(region => FoldingInfo(
       region.getRange,
-      myBuilder.getLanguagePlaceholderText(region.getElement, region.getRange),
+      // call `getPlaceholderText` instead of `getLanguagePlaceholderText` to get custom foldings as well
+      myBuilder.getPlaceholderText(region.getElement, region.getRange),
       // using builder instead of `region.isCollapsedByDefault` because latest returns null by default
       // when regions are obtained from `myBuilder.buildFoldRegions`
       myBuilder.isCollapsedByDefault(region)
