@@ -128,28 +128,9 @@ private object MultipleScalaVersionsRunner {
     assert(classScalaVersions.nonEmpty, "at least one scala version should be specified")
     assert(classJdkVersions.nonEmpty, "at least one jdk version should be specified")
 
-    val filterScalaVersionAnnotation = findAnnotation(klass, classOf[RunWithScalaVersionsFilter]).map(_.value.toSeq)
-    val filterJdkVersionAnnotation = findAnnotation(klass, classOf[RunWithJdkVersionsFilter]).map(_.value.toSeq)
-
-    val runWithScalaVersion: Option[Seq[TestScalaVersion]] =
-      filterScalaVersionAnnotation
-    val runWithJdkVersion: Option[Seq[TestJdkVersion]] = {
-      (filterJdkVersionAnnotation, filterJdkVersionRegistry.map(Seq(_))) match {
-        case (Some(a), Some(b)) => Some(a.intersect(b))
-        case (Some(a), None)    => Some(a)
-        case (None, Some(b))    => Some(b)
-        case (None, None)       => None
-      }
-    }
-
-    def filterScalaVersion(version: TestScalaVersion): Boolean =
-      runWithScalaVersion.forall(_.contains(version))
-    def filterJdkVersion(version: TestJdkVersion): Boolean =
-      runWithJdkVersion.forall(_.contains(version))
-
     val allTestCases: Seq[(TestCase, ScalaVersion, JdkVersion)] = {
       val collected = new ScalaVersionAwareTestsCollector(klass, classScalaVersions, classJdkVersions).collectTests()
-      collected.collect { case (test, sv, jv) if filterScalaVersion(sv) && filterJdkVersion(jv) =>
+      collected.collect { case (test, sv, jv) if filterJdkVersionRegistry.forall(_ == jv) =>
         (test, sv.toProductionVersion, jv.toProductionVersion)
       }
     }
