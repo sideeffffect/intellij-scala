@@ -18,6 +18,8 @@ import org.jetbrains.plugins.scala.extensions.{CharSeqExt, inWriteAction}
 import scala.jdk.CollectionConverters.MapHasAsJava
 import scala.jdk.CollectionConverters.ListHasAsScala
 import kotlin.jvm.functions.Function1
+import org.jetbrains.annotations.ApiStatus
+
 import java.lang.{Integer => JInt}
 
 package object buildSystem {
@@ -77,6 +79,8 @@ package object buildSystem {
     }
   }
 
+  @deprecated("Don't use this method. .gitignore is now added in the wizard via AssetsNewProjectWizardStep")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2025.1")
   private[buildSystem]
   def addGitIgnore(project: Project, path: String): VirtualFile = {
     val manager = FileTemplateManager.getInstance(project)
