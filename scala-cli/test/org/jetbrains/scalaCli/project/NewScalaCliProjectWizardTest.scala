@@ -138,9 +138,9 @@ class NewScalaCliProjectWizardTest extends NewScalaProjectWizardTestBase with Ex
     Files.createDirectories(projectDirectory)
 
     //note: only Linux and macOS systems are allowed
-    val archiveName =
-      if (SystemInfo.isLinux) "scala-cli-x86_64-pc-linux.gz"
-      else "scala-cli-aarch64-apple-darwin.gz"
+    val cpuArch = if (SystemInfo.isAarch64) "aarch64" else "x86_64"
+    val os = if (SystemInfo.isLinux) "pc-linux" else "apple-darwin"
+    val archiveName = s"scala-cli-$cpuArch-$os.gz"
 
     val curlCommand = s"curl --fail --location https://github.com/Virtuslab/scala-cli/releases/latest/download/$archiveName"
     val gzipCommand = "gzip --decompress"
