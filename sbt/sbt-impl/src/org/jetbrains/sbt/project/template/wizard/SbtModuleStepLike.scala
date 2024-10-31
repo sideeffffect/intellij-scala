@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.DocumentAdapter
 import org.jetbrains.plugins.scala.extensions._
+import org.jetbrains.plugins.scala.isUnitTestMode
 import org.jetbrains.plugins.scala.project.Versions
 import org.jetbrains.plugins.scala.project.template.PackagePrefixStepLike
 import org.jetbrains.sbt.SbtBundle
@@ -55,7 +56,9 @@ private[template] trait SbtModuleStepLike extends PackagePrefixStepLike with Sca
   override protected def initSelectionsAndUi(contextDisposable: Disposable): Unit = {
     super.initSelectionsAndUi(contextDisposable)
     _initSelectionsAndUi
-    downloadSbtVersions(contextDisposable)
+    if (!isUnitTestMode) {
+      downloadSbtVersions(contextDisposable)
+    }
   }
 
   private lazy val _initSelectionsAndUi: Unit = {

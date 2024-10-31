@@ -4,6 +4,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.ui.components.JBCheckBox
 import org.jetbrains.plugins.scala.extensions.applyTo
+import org.jetbrains.plugins.scala.isUnitTestMode
 import org.jetbrains.plugins.scala.project.Versions
 import org.jetbrains.plugins.scala.project.template.ScalaVersionDownloadingDialog
 import org.jetbrains.plugins.scala.util.AsynchronousVersionsDownloading
@@ -44,7 +45,9 @@ trait ScalaVersionStepLike extends AsynchronousVersionsDownloading {
    */
   protected def initSelectionsAndUi(contextDisposable: Disposable): Unit = {
     _initSelectionsAndUi
-    downloadScalaVersions(contextDisposable)
+    if (!isUnitTestMode) {
+      downloadScalaVersions(contextDisposable)
+    }
   }
 
   private lazy val _initSelectionsAndUi: Unit = {
