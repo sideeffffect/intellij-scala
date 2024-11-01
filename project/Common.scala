@@ -173,7 +173,8 @@ object Common {
         // NOTE: keep versions in sync with ultimate/.idea/kotlinc.xml and community/.idea/kotlinc.xml
         kotlinVersion := "2.0.21-488",
         kotlincJvmTarget := "17",
-        kotlinRuntimeProvided := true
+        kotlinRuntimeProvided := true,
+        resolvers += DependencyResolvers.IntelliJDependencies,
       )
 
   /**
