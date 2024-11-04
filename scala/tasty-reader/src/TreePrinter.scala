@@ -471,10 +471,15 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
             case None =>
               sb ++= simple("") // TODO implement
           }
-          val isDeclaration = children.drop(1).forall(_.isModifier)
-          if (!isDeclaration) {
+          if (node.contains(HASDEFAULT)) {
             sb ++= " = "
-            sb ++= CompiledCode
+            sb ++= "_root_.scala.compiletime.deferred"
+          } else {
+            val isDeclaration = children.drop(1).forall(_.isModifier)
+            if (!isDeclaration) {
+              sb ++= " = "
+              sb ++= CompiledCode
+            }
           }
       }
     }
@@ -747,9 +752,9 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
     val isPrivateConstructor = node.is(DEFDEF) && node.names == Seq("<init>") && node.contains(PRIVATE)
 
     lazy val contextBounds = if (!privateMembers && isPrivateConstructor) Seq.empty else node.children.collect {
-      case param @ Node3(PARAM, Seq(name), Seq(tail, _: _*)) if name.startsWith("evidence$") && param.contains(IMPLICIT) && hasSingleArgument(tail) =>
+      case param @ Node3(PARAM, Seq(name), Seq(tail, _: _*)) if (param.contains(IMPLICIT) || param.contains(GIVEN)) && hasSingleArgument(tail) && (name.startsWith("evidence$") || !name.contains("$") && param.position().zip(tail.firstChild.position()).exists(_ == _)) =>
         val Seq(designator, argument) = tail.children
-        (simple(textOfType(argument)), simple(textOfType(designator)))
+        (simple(textOfType(argument)), simple(textOfType(designator)), if (name.startsWith("evidence$")) None else Some(name))
     }
 
     var open = false
@@ -797,13 +802,17 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
             boundsIn(sb, bounds)
           case _ =>
         }
-        contextBounds.foreach { case (id, tpe) =>
+        contextBounds.foreach { case (id, tpe, symbol) =>
           if (id == name) {
             if (needsSpace(nameId)) {
               sb ++= " "
             }
             sb ++= ": "
             sb ++= tpe
+            symbol.foreach { s =>
+              sb ++= " as "
+              sb ++= s
+            }
           }
         }
         next = true
@@ -851,7 +860,7 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
         sb ++= ")"
         open = false
         isFirstClause = false
-      case node @ Node3(PARAM, Seq(name), children) if !(name.startsWith("evidence$") && node.contains(IMPLICIT) && hasSingleArgument(children.head)) =>
+      case node @ Node3(PARAM, Seq(name), Seq(tail, _: _*)) if !((node.contains(IMPLICIT) || node.contains(GIVEN)) && hasSingleArgument(tail) && (name.startsWith("evidence$") || !name.contains("$") && node.position().zip(tail.firstChild.position()).exists(_ == _))) =>
         if (!open) {
           sb ++= "("
           open = true
@@ -872,7 +881,7 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
             sb ++= ", "
           }
           textOfAnnotationIn(sb, "", node, " ")
-          val tpe = textOfType(children.head)
+          val tpe = textOfType(tail)
           if (node.contains(INLINE) || tpe.endsWith(" @_root_.scala.annotation.internal.InlineParam")) {
             sb ++= "inline "
           }
