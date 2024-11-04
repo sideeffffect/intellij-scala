@@ -27,7 +27,7 @@ trait ScalaFile extends ScalaPsiElement
 
   def isWorksheetFile: Boolean
 
-  def isMillFile: Boolean = getName.endsWith(".mill") || getName.endsWith(".mill.scala")
+  def isMillFile: Boolean
 
   def allowsForwardReferences: Boolean
 
