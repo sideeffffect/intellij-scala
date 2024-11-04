@@ -5,6 +5,10 @@ import org.jetbrains.plugins.scala.project.ScalaLanguageLevel
 import org.jetbrains.plugins.scala.util.HashBuilder._
 import org.jetbrains.sbt.MinorVersionGenerator
 
+/**
+ * @see [[project.ScalaFeatures]] - represents the set of all parser features, calculated from a scala version and compiler options)
+ * @see [[ScalaLanguageLevel]]
+ */
 final class ScalaVersion(
   val languageLevel: ScalaLanguageLevel,
   val minorSuffix: String
@@ -26,6 +30,10 @@ final class ScalaVersion(
   @inline def isScala3: Boolean = languageLevel.isScala3
   @inline def language: Language = languageLevel.getLanguage
 
+  //TODO: it it's not consistent with naming of `minor`
+  // `minor` represents the full version as string
+  // I would expect this to represent the same but in a format of Version, not string
+  // We should rename this to `minorSuffixVersion` or rename `minor` to something else
   lazy val minorVersion: project.Version = project.Version(minorSuffix)
 
   override def compare(that: ScalaVersion): Int =

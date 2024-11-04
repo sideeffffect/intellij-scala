@@ -126,7 +126,7 @@ object GeneratePossibleSourceTypesMapping {
 
       override protected def needsSdk(): Boolean = true
 
-      override protected def supportedInScalaVersion(version: ScalaVersion): Boolean =
+      override def supportedInScalaVersion(version: ScalaVersion): Boolean =
         version == ScalaVersion.Latest.Scala_2_13
 
       override protected def getLanguage: Language = lang

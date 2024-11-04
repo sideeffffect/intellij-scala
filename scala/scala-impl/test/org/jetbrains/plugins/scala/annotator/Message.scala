@@ -7,6 +7,9 @@ import com.intellij.openapi.util.TextRange
 import scala.annotation.nowarn
 import scala.math.Ordered.orderingToOrdered
 
+/**
+ * See also [[Message2]] for the version with range and text attributes
+ */
 sealed abstract class Message extends Ordered[Message] {
   def element: String
   def message: String

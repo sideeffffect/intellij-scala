@@ -1,10 +1,14 @@
 package org.jetbrains.plugins.scala.annotator.element
 
 import org.jetbrains.plugins.scala.ScalaVersion
-import org.jetbrains.plugins.scala.annotator.ScalaHighlightingTestBase
+import org.jetbrains.plugins.scala.annotator.ScalaHighlightingTestLike
+import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
 
 /** see also [[org.jetbrains.plugins.scala.annotator.LiteralTypesHighlightingTestBase]] */
-abstract class ScLiteralTypeElementAnnotatorTestBase extends ScalaHighlightingTestBase {
+abstract class ScLiteralTypeElementAnnotatorTestBase
+  extends ScalaLightCodeInsightFixtureTestCase
+    with ScalaHighlightingTestLike {
+
   protected val SimpleLiteralTypeCode =
     """class A {
       |  def f0: 42 = ???
@@ -30,6 +34,7 @@ abstract class ScLiteralTypeElementAnnotatorTestBase extends ScalaHighlightingTe
       |""".stripMargin
 
   def testSimpleLiteralType(): Unit
+
   def testNonSimpleLiteralType(): Unit
 }
 
@@ -101,9 +106,44 @@ class ScLiteralTypeElementAnnotatorTest_Scala_2_13 extends ScLiteralTypeElementA
       |Error(-9223372036854775809L,Integer number is out of range even for type Long)
       |""".stripMargin
   )
+
+  protected val CodeWithUnicodeEscapes =
+    s"""val s1: "string#" = "string#"
+       |val s2: \"\"\"string\\u0023\"\"\" = "string\\u0023"
+       |val s3: \"\"\"string#\"\"\" = "string\\u0023"
+       |val s4: \"\"\"string\\u0023\"\"\" = "string#"
+       |val s5: "test 敃" = \"\"\"test \\u6543\"\"\"
+       |""".stripMargin
+
+  def testWithUnicodeSequences(): Unit =
+    assertNoErrors(
+      CodeWithUnicodeEscapes
+    )
 }
 
-class ScLiteralTypeElementAnnotatorTest_Scala_3_0 extends ScLiteralTypeElementAnnotatorTest_Scala_2_13 {
+class ScLiteralTypeElementAnnotatorTest_Scala_3 extends ScLiteralTypeElementAnnotatorTest_Scala_2_13 {
   override protected def supportedIn(version: ScalaVersion): Boolean =
-    version >= ScalaVersion.Latest.Scala_3_0
+    version.isScala3
+
+  override def testWithUnicodeSequences(): Unit =
+    assertErrorsText(
+      CodeWithUnicodeEscapes,
+      s"""Error("string\\u0023",Expression of type "string#" doesn't conform to expected type "string\\\\u0023")
+         |Error("string#",Expression of type "string#" doesn't conform to expected type "string\\\\u0023")
+         |Error(\"\"\"test \\u6543\"\"\",Expression of type "test \\\\u6543" doesn't conform to expected type "test \\u6543")
+         |""".stripMargin
+    )
+
+  def testWithUnicodeSequences_WithCompileTimeOps(): Unit =
+    assertErrorsText(
+      s"""import scala.compiletime.ops.string.+
+         |
+         |val s1: "string\\u0023" = "string\\u0023"
+         |val s2: "string\\u0023" = "string" + "\\u0023"
+         |val s3: "string" + "\\u0023" = "string\\u0023"
+         |val s4: "string" + "\\u0023" = "string\\u0024"
+         |""".stripMargin,
+      s"""Error("string\\u0024",Expression of type "string$$" doesn't conform to expected type "string#")
+         |""".stripMargin
+    )
 }

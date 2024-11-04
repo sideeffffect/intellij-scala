@@ -1,6 +1,9 @@
 package org.jetbrains.plugins.scala
 package annotator
 
+/**
+ * @see [[org.jetbrains.plugins.scala.annotator.element.ScLiteralTypeElementAnnotatorTestBase]]
+ */
 class LiteralTypesHighlightingTest extends LiteralTypesHighlightingTestBase {
   import Message._
 

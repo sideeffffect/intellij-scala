@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.scala.annotator
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.intention.CommonIntentionAction
 import com.intellij.lang.annotation.{AnnotationSession, HighlightSeverity}
 import com.intellij.openapi.editor.colors.TextAttributesKey
@@ -15,7 +14,13 @@ class AnnotatorHolderMock(file: PsiFile) extends AnnotatorHolderMockBase[Message
 
   def errorAnnotations: List[Message.Error] = annotations.filterByType[Message.Error]
 
-  override def createMockAnnotation(severity: HighlightSeverity, range: TextRange, message: String, enforcedAttributes: TextAttributesKey): Option[Message] = {
+  override def createMockAnnotation(
+    severity: HighlightSeverity,
+    range: TextRange,
+    message: String,
+    enforcedAttributes: TextAttributesKey,
+    fixes: Seq[CommonIntentionAction]
+  ): Option[Message] = {
     val constructor = Message.HighlightingSeverityToConstructor.get(severity)
     constructor.map(_.apply(fileTextOf(range), message))
   }
@@ -24,20 +29,15 @@ class AnnotatorHolderMock(file: PsiFile) extends AnnotatorHolderMockBase[Message
 
 class AnnotatorHolderExtendedMock(file: PsiFile) extends AnnotatorHolderMockBase[Message2](file) {
 
-  @nowarn("cat=deprecation")
-  private val severityMapping: Map[HighlightSeverity, (TextRange, String, String, TextAttributesKey) => Message2] =
-    Map(
-      HighlightSeverity.ERROR -> Message2.Error.apply,
-      HighlightSeverity.WARNING -> Message2.Warning.apply,
-      HighlightSeverity.WEAK_WARNING -> Message2.Warning.apply,
-      HighlightSeverity.INFORMATION -> Message2.Info.apply,
-      HighlightSeverity.INFO -> Message2.Info.apply,
-      HighlightInfoType.SYMBOL_TYPE_SEVERITY -> Message2.Info.apply,
-    )
-
-  override def createMockAnnotation(severity: HighlightSeverity, range: TextRange, message: String, enforcedAttributes: TextAttributesKey): Option[Message2] = {
-    val transformer = severityMapping.get(severity)
-    transformer.map(_.apply(range, fileTextOf(range), message, enforcedAttributes))
+  override def createMockAnnotation(
+    severity: HighlightSeverity,
+    range: TextRange,
+    message: String,
+    enforcedAttributes: TextAttributesKey,
+    fixes: Seq[CommonIntentionAction]
+  ): Option[Message2] = {
+    val code = fileTextOf(range)
+    Some(Message2(severity, range, code, message, enforcedAttributes, fixes))
   }
 }
 
@@ -52,7 +52,7 @@ abstract class AnnotatorHolderMockBase[T : Ordering](file: PsiFile) extends Scal
 
   private var myAnnotations: List[(TextRange, T)] = List[(TextRange, T)]()
 
-  def createMockAnnotation(severity: HighlightSeverity, range: TextRange, message: String, enforcedAttributes: TextAttributesKey): Option[T]
+  def createMockAnnotation(severity: HighlightSeverity, range: TextRange, message: String, enforcedAttributes: TextAttributesKey, fixes: Seq[CommonIntentionAction]): Option[T]
 
   //noinspection ApiStatus,UnstableApiUsage
   override def getCurrentAnnotationSession: AnnotationSession = new AnnotationSession(file): @nowarn("cat=deprecation")
@@ -68,9 +68,14 @@ abstract class AnnotatorHolderMockBase[T : Ordering](file: PsiFile) extends Scal
   private class DummyAnnotationBuilder(severity: HighlightSeverity, @Nullable @Nls message: String)
     extends DummyScalaAnnotationBuilder(severity, message) {
 
-    override def onCreate(severity: HighlightSeverity, message: String, range: TextRange,
-                          enforcedAttributes: TextAttributesKey, fixes: Seq[CommonIntentionAction]): Unit =
-      myAnnotations :::= createMockAnnotation(severity, range, message, enforcedAttributes).toList.map(range -> _)
+    override def onCreate(
+      severity: HighlightSeverity,
+      message: String,
+      range: TextRange,
+      enforcedAttributes: TextAttributesKey,
+      fixes: Seq[CommonIntentionAction]
+    ): Unit =
+      myAnnotations :::= createMockAnnotation(severity, range, message, enforcedAttributes, fixes).toList.map(range -> _)
   }
 
   protected def fileTextOf(range: TextRange): String = {

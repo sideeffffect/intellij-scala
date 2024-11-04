@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.scala.annotator
 
+import com.intellij.lang.annotation.HighlightSeverity
 import org.intellij.lang.annotations.Language
 import org.jetbrains.plugins.scala.annotator.Message2.Error
 import org.jetbrains.plugins.scala.base.SimpleTestCase
@@ -20,7 +21,8 @@ abstract class ScopeAnnotatorTestBase extends SimpleTestCase {
   protected def clashesOf(@Language(value = "Scala", prefix = Header) code: String): Seq[String] = {
     val messagesSeq = messages(code)
     messagesSeq.map {
-      case error: Error => error.code
+      case Message2(HighlightSeverity.ERROR, _, code, _, _, _) =>
+        code
       case message =>
         Assert.fail("Unexpected message: " + message).asInstanceOf[Nothing]
     }

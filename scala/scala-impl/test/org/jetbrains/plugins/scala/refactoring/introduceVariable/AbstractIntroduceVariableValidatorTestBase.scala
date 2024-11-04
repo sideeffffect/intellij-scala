@@ -24,13 +24,13 @@ abstract class AbstractIntroduceVariableValidatorTestBase(kind: String)
 
   protected var myFixture: ScalaIntroduceVariableTestFixture = _
 
-  override protected def setUp(project: Project): Unit = {
+  override def setUp(project: Project): Unit = {
     super.setUp(project)
     myFixture = new ScalaIntroduceVariableTestFixture(project, None, language = language)
     myFixture.setUp()
   }
 
-  override protected def tearDown(project: Project): Unit = {
+  override def tearDown(project: Project): Unit = {
     myFixture.tearDown()
     super.tearDown(project)
   }

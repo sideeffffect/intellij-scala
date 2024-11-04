@@ -27,6 +27,8 @@ trait ScalaFile extends ScalaPsiElement
 
   def isWorksheetFile: Boolean
 
+  def isMillFile: Boolean
+
   def allowsForwardReferences: Boolean
 
   /**

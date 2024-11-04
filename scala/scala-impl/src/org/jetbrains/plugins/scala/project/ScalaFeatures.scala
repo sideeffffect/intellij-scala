@@ -9,12 +9,29 @@ import org.jetbrains.plugins.scala.util.BitMaskStorage
 
 import scala.language.implicitConversions
 
+/**
+ * The trait describes the features of the language that affect file parsing rules.
+ * These features are calculated based on the combination of scala compiler version and scala compiler flags.<br>
+ * For example [[noUnicodeEscapesInRawStrings]] is enabled in since Scala 3
+ * OR since Scala 2.13.14 with "-Xsource:3" and "-Xsource-features:unicode-escapes-raw" compiler options.
+ *
+ * The trait is required because [[ScalaVersion]] or [[ScalaLanguageLevel]] doesn't represent all the parser features.
+ * Some of them are enabled by the compiler options.
+ *
+ * @note the implementation is supposed to be lightweight because each Scala file is supposed to have attached scala features
+ *
+ * @see [[ScalaVersion]]
+ * @see [[ScalaLanguageLevel]]
+ *
+ * @todo refactor (see SCL-23158)
+ */
 trait ScalaFeatures extends Any {
   def psiContext: Option[PsiElement]
 
   def languageLevel: ScalaLanguageLevel
   def isScala3: Boolean = languageLevel.isScala3
   def isSource3: Boolean
+  def isSource3UnicodeEscapesRaw: Boolean //TODO: shouldn't be here, see SCL-23158
 
   def hasMetaEnabled: Boolean
   def hasTrailingCommasEnabled: Boolean
@@ -36,6 +53,7 @@ trait ScalaFeatures extends Any {
   def `optional braces for method arguments`: Boolean
   def `named tuples`: Boolean
   def usingInArgumentsEnabled: Boolean
+  def noUnicodeEscapesInRawStrings: Boolean
 }
 
 object ScalaFeatures {
@@ -61,6 +79,7 @@ object ScalaFeatures {
 
     def languageLevel: ScalaLanguageLevel = Bits.languageLevel.read(bits)
     def isSource3: Boolean = Bits.isSource3.read(bits)
+    def isSource3UnicodeEscapesRaw: Boolean = Bits.isSource3UnicodeEscapesRaw.read(bits)
 
     private def hasNoIndentFlag: Boolean = Bits.hasNoIndentFlag.read(bits)
     private def hasOldSyntaxFlag: Boolean = Bits.hasOldSyntaxFlag.read(bits)
@@ -92,9 +111,10 @@ object ScalaFeatures {
 
     override def usingInArgumentsEnabled: Boolean = Bits.usingInArgumentsEnabled.read(bits)
 
+    override def noUnicodeEscapesInRawStrings: Boolean = Bits.noUnicodeEscapesInRawStrings.read(bits)
+
     def `optional braces for method arguments`: Boolean =
       indentationBasedSyntaxEnabled && languageLevel >= ScalaLanguageLevel.Scala_3_3
-
 
     def `named tuples`: Boolean =
       languageLevel >= ScalaLanguageLevel.Scala_3_5
@@ -102,6 +122,7 @@ object ScalaFeatures {
     def copy(
       version:                        ScalaVersion,
       isSource3:                      Boolean = this.isSource3,
+      isSource3UnicodeEscapesRaw:     Boolean = this.isSource3UnicodeEscapesRaw,
       hasNoIndentFlag:                Boolean = this.hasNoIndentFlag,
       hasOldSyntaxFlag:               Boolean = this.hasOldSyntaxFlag,
       hasDeprecationFlag:             Boolean = this.hasDeprecationFlag,
@@ -113,6 +134,7 @@ object ScalaFeatures {
       ScalaFeatures(
         version = version,
         isSource3 = isSource3,
+        isSource3UnicodeEscapesRaw = isSource3UnicodeEscapesRaw,
         hasNoIndentFlag = hasNoIndentFlag,
         hasOldSyntaxFlag = hasOldSyntaxFlag,
         hasDeprecationFlag = hasDeprecationFlag,
@@ -130,6 +152,7 @@ object ScalaFeatures {
 
     override def languageLevel: ScalaLanguageLevel               = delegate.languageLevel
     override def isSource3: Boolean                              = delegate.isSource3
+    override def isSource3UnicodeEscapesRaw: Boolean             = delegate.isSource3UnicodeEscapesRaw
     override def hasMetaEnabled: Boolean                         = delegate.hasMetaEnabled
     override def hasTrailingCommasEnabled: Boolean               = delegate.hasTrailingCommasEnabled
     override def hasUnderscoreWildcardsDisabled: Boolean         = delegate.hasUnderscoreWildcardsDisabled
@@ -145,6 +168,7 @@ object ScalaFeatures {
     override def `? as wildcard marker`: Boolean                 = delegate.`? as wildcard marker`
     override def `case in pattern bindings`: Boolean             = delegate.`case in pattern bindings`
     override def usingInArgumentsEnabled: Boolean                = delegate.usingInArgumentsEnabled
+    override def noUnicodeEscapesInRawStrings: Boolean           = delegate.noUnicodeEscapesInRawStrings
     override def `optional braces for method arguments`: Boolean = delegate.`optional braces for method arguments`
     override def `named tuples`: Boolean                         = delegate.`named tuples`
   }
@@ -160,15 +184,18 @@ object ScalaFeatures {
 
   def deserializeFromInt(bits: Int): SerializableScalaFeatures = new SerializableScalaFeatures(bits)
 
-  def apply(version: ScalaVersion,
-            isSource3: Boolean,
-            hasNoIndentFlag: Boolean,
-            hasOldSyntaxFlag: Boolean,
-            hasDeprecationFlag: Boolean,
-            hasSourceFutureFlag: Boolean,
-            hasMetaEnabled: Boolean,
-            hasTrailingCommasEnabled: Boolean,
-            hasUnderscoreWildcardsDisabled: Boolean): SerializableScalaFeatures = {
+  def apply(
+    version: ScalaVersion,
+    isSource3: Boolean,
+    isSource3UnicodeEscapesRaw: Boolean,
+    hasNoIndentFlag: Boolean,
+    hasOldSyntaxFlag: Boolean,
+    hasDeprecationFlag: Boolean,
+    hasSourceFutureFlag: Boolean,
+    hasMetaEnabled: Boolean,
+    hasTrailingCommasEnabled: Boolean,
+    hasUnderscoreWildcardsDisabled: Boolean
+  ): SerializableScalaFeatures = {
 
     val languageLevel = version.languageLevel
     val isScala3 = languageLevel.isScala3
@@ -194,6 +221,8 @@ object ScalaFeatures {
 
     val usingInArgumentsEnabled = forMinorVersion(version, isScala3, _ >= minorVersion18, _ >= minorVersion12)
 
+    val noUnicodeEscapesInRawStrings = forMinorVersion(version, isScala3, _ => false, _ >= minorVersion14 && isSource3 && isSource3UnicodeEscapesRaw)
+
     create(
       languageLevel = languageLevel,
       isSource3   = isSource3,
@@ -210,7 +239,8 @@ object ScalaFeatures {
       `in >= 2.12.15 or 2.13.7 with -XSource:3 or 3` = `in >= 2.12.15 or 2.13.7 with -XSource:3 or 3`,
       `in >= 2.12.15 or 2.13.7 or 3` = `in >= 2.12.15 or 2.13.7 or 3`,
       `in >= 2.12.16 or 2.13.9 or 3` = `in >= 2.12.16 or 2.13.9 or 3`,
-      usingInArgumentsEnabled = usingInArgumentsEnabled
+      usingInArgumentsEnabled = usingInArgumentsEnabled,
+      noUnicodeEscapesInRawStrings = noUnicodeEscapesInRawStrings
     )
   }
 
@@ -230,6 +260,7 @@ object ScalaFeatures {
     ScalaFeatures(
       version,
       isSource3 = false,
+      isSource3UnicodeEscapesRaw = version.isScala3,
       hasNoIndentFlag = false,
       hasOldSyntaxFlag = false,
       hasDeprecationFlag = false,
@@ -315,7 +346,8 @@ object ScalaFeatures {
     `in >= 2.12.15 or 2.13.7 with -XSource:3 or 3`: Boolean,
     `in >= 2.12.15 or 2.13.7 or 3`:                 Boolean,
     `in >= 2.12.16 or 2.13.9 or 3`:                 Boolean,
-    usingInArgumentsEnabled:                        Boolean
+    usingInArgumentsEnabled:                        Boolean,
+    noUnicodeEscapesInRawStrings:                   Boolean,
   ): SerializableScalaFeatures = {
     val bits = Ref.create[Int]
 
@@ -335,6 +367,7 @@ object ScalaFeatures {
     Bits.`in >= 2.12.15 or 2.13.7 or 3`.write(bits, `in >= 2.12.15 or 2.13.7 or 3`)
     Bits.`in >= 2.12.16 or 2.13.9 or 3`.write(bits, `in >= 2.12.16 or 2.13.9 or 3`)
     Bits.usingInArgumentsEnabled.write(bits, usingInArgumentsEnabled)
+    Bits.noUnicodeEscapesInRawStrings.write(bits, noUnicodeEscapesInRawStrings)
 
     new SerializableScalaFeatures(bits.get())
   }
@@ -343,6 +376,7 @@ object ScalaFeatures {
   private object Bits extends BitMaskStorage {
     val languageLevel                        = jEnum[ScalaLanguageLevel]("languageLevel")
     val isSource3                            = bool("isSource3")
+    val isSource3UnicodeEscapesRaw           = bool("isSource3UnicodeEscapesRaw")
     val hasNoIndentFlag                      = bool("hasNoIndentFlag")
     val hasOldSyntaxFlag                     = bool("hasOldSyntaxFlag")
     val hasDeprecationFlag                   = bool("hasDeprecationFlag")
@@ -360,6 +394,7 @@ object ScalaFeatures {
     val `in >= 2.12.16 or 2.13.9 or 3` = bool("in >= 2.12.16 or 2.13.9 or 3")
 
     val usingInArgumentsEnabled = bool("usingInArgumentsEnabled")
+    val noUnicodeEscapesInRawStrings = bool("noUnicodeEscapesInRawStrings")
 
     override val version: Int = finishAndMakeVersion()
   }
