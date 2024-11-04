@@ -76,6 +76,11 @@ class ScalaFileImpl(
 
   override def isWorksheetFile: Boolean = false
 
+  override def isMillFile: Boolean = {
+    val fileName = getViewProvider.getVirtualFile.getName
+    fileName.endsWith(".mill") || fileName.endsWith(".mill.scala")
+  }
+
   override def setPackageName(inName: String): Unit = {
     val basePackageName =
       this.module.map(ScalaProjectSettings.getInstance(getProject).getBasePackageFor).getOrElse("")
