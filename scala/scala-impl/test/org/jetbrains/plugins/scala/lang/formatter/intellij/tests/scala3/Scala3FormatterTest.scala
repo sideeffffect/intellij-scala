@@ -676,8 +676,14 @@ class Scala3FormatterTest extends Scala3FormatterBaseTest {
   }
 
   def testNamedTupleOneLine(): Unit = {
-    doTextTest("(  x  =  1  ,  y  =  2  )", "(x = 1, y = 2)")
-    doTextTest("(x=1,y=2)", "(x = 1, y = 2)")
+    doTextTest(
+      "(  x  =  1  ,  y  =  2  )",
+      "(x = 1, y = 2)"
+    )
+    doTextTest(
+      "(x=1,y=2)",
+      "(x = 1, y = 2)"
+    )
   }
 
   def testNamedTupleMultiLine(): Unit = {
@@ -696,8 +702,14 @@ class Scala3FormatterTest extends Scala3FormatterBaseTest {
   }
 
   def testNamedTupleTypeOneLine(): Unit = {
-    doTextTest("val x : (  x  :  Int  ,  y  :  Int  ) = ???", "val x: (x: Int, y: Int) = ???")
-    doTextTest("val x:(x:Int,y:Int)= ???", "val x: (x: Int, y: Int) = ???")
+    doTextTest(
+      "val x : (  x  :  Int  ,  y  :  Int  ) = ???",
+      "val x: (x: Int, y: Int) = ???"
+    )
+    doTextTest(
+      "val x:(x:Int,y:Int)= ???",
+      "val x: (x: Int, y: Int) = ???"
+    )
   }
 
   def testNamedTupleTypeMultiLine(): Unit = {
@@ -717,8 +729,14 @@ class Scala3FormatterTest extends Scala3FormatterBaseTest {
   }
 
   def testNamedTuplePatternOneLine(): Unit = {
-    doTextTest("val (  x  =  _  ,  y  =  _  ) = ???", "val (x = _, y = _) = ???")
-    doTextTest("val (x=_,y=_)= ???", "val (x = _, y = _) = ???")
+    doTextTest(
+      "val (  x  =  _  ,  y  =  _  ) = ???",
+      "val (x = _, y = _) = ???"
+    )
+    doTextTest(
+      "val (x=_,y=_)= ???",
+      "val (x = _, y = _) = ???"
+    )
   }
 
   def testNamedTuplePatternMultiLine(): Unit = {
