@@ -78,9 +78,12 @@ final class WorksheetFileSettings private(
         None
       }
     val maybeModule1 = fixedModule.orElse(moduleFromPersistedSettings)
-    val maybeModule2 = maybeModule1.orElse(project.anyScalaModule)
+    val maybeModule2 = maybeModule1.orElse(anyScalaSdkModule)
     maybeModule2
   }
+
+  private def anyScalaSdkModule: Option[Module] =
+    WorksheetModuleUtil.allProductionModulesWithScalaSdk(project).headOption
 
   private def moduleFromPersistedSettings: Option[Module] = {
     val moduleName = persistedSetting(_.getModuleName, _.getModuleName)
