@@ -5,8 +5,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.fileTypes.{SyntaxHighlighter, SyntaxHighlighterFactory}
 import com.intellij.openapi.options.colors.{AttributesDescriptor, ColorDescriptor, RainbowColorSettingsPage}
 import org.jetbrains.plugins.scala.highlighter.DefaultHighlighter._
-import org.jetbrains.plugins.scala.icons.Icons
-import org.jetbrains.plugins.scala.{ScalaBundle, ScalaLanguage}
+import org.jetbrains.plugins.scala.{NlsString, ScalaLanguage}
 
 import java.util
 import javax.swing.Icon
@@ -158,7 +157,7 @@ object ScalaColorsAndFontsPage {
   }
 }
 class ScalaColorsAndFontsPage extends RainbowColorSettingsPage {
-  override def getDisplayName: String = ScalaBundle.message("options.scala.display.name")
+  override def getDisplayName: String = NlsString.displayNameAndConfigurableId("Scala")
 
   override def getLanguage: ScalaLanguage = ScalaLanguage.INSTANCE
 

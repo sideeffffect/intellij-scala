@@ -14,7 +14,7 @@ import org.jetbrains.annotations.{Nls, NonNls}
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.help.ScalaWebHelpProvider
 import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaLanguageCodeStyleSettingsProvider._
-import org.jetbrains.plugins.scala.{Scala3Language, ScalaBundle, ScalaLanguage}
+import org.jetbrains.plugins.scala.{NlsString, Scala3Language, ScalaBundle, ScalaLanguage}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters.ListHasAsScala
@@ -24,7 +24,7 @@ class ScalaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsPr
   override def createConfigurable(baseSettings: CodeStyleSettings, modelSettings: CodeStyleSettings): CodeStyleConfigurable =
     new ScalaCodeStyleAbstractConfigurable(baseSettings, modelSettings)
 
-  override def getConfigurableDisplayName: String = ScalaBundle.message("options.scala.display.name")
+  override def getConfigurableDisplayName: String = NlsString.displayNameAndConfigurableId("Scala")
 
   override def getDisplayPriority = DisplayPriority.COMMON_SETTINGS
 

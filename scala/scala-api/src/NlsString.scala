@@ -43,4 +43,13 @@ object NlsString {
    */
   implicit def toStringOps(nlsString: NlsString): StringOps =
     new StringOps(nlsString.nls)
+
+  /**
+   * TODO:
+   *   Some Configurables use the display name as id for themselves,
+   *   but the search indexer cannot really handle that...
+   *   So let's use this method until IJPL-166219 is resolved
+   */
+  @Nls
+  def displayNameAndConfigurableId(nls: String): NlsString = force(nls)
 }
