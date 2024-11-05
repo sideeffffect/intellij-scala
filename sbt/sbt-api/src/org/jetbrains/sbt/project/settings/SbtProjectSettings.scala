@@ -66,7 +66,7 @@ class SbtProjectSettings extends ExternalProjectSettings {
   @BeanProperty
   var useSeparateCompilerOutputPaths: Boolean = false
   @BeanProperty
-  var separateProdAndTestSources: Boolean = true
+  var separateProdAndTestSources: Boolean = false
 
   //SBT shell settings
   @BeanProperty var useSbtShellForImport: Boolean = false
