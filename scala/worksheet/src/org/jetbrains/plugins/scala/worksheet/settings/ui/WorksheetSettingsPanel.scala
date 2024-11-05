@@ -2,21 +2,21 @@ package org.jetbrains.plugins.scala.worksheet.settings.ui
 
 import com.intellij.application.options.ModulesComboBox
 import com.intellij.core.JavaPsiBundle
-import com.intellij.execution.ui.ConfigurationModuleSelector
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
-import javax.swing._
 import net.miginfocom.layout.CC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.scala.extensions.ObjectExt
 import org.jetbrains.plugins.scala.util.ui.TextWithMnemonic.AbstractButtonExt
-import org.jetbrains.plugins.scala.worksheet.settings.WorksheetExternalRunType
 import org.jetbrains.plugins.scala.worksheet.settings.ui.WorksheetSettingsPanel.TabTypeData
 import org.jetbrains.plugins.scala.worksheet.settings.ui.WorksheetSettingsPanel.TabTypeData._
+import org.jetbrains.plugins.scala.worksheet.settings.{WorksheetExternalRunType, WorksheetModuleUtil}
 import org.jetbrains.plugins.scala.worksheet.{WorksheetBundle, WorksheetUtils}
+
+import javax.swing._
 
 private final class WorksheetSettingsPanel(
   tabTypeData: TabTypeData,
@@ -59,7 +59,9 @@ private final class WorksheetSettingsPanel(
     availableProfilesProvider()
 
   private def initData(settingsData: WorksheetSettingsData): Unit = {
-    moduleComboBox.fillModules(project)
+    import scala.jdk.CollectionConverters._
+    val availableModules = WorksheetModuleUtil.allProductionModulesWithScalaSdk(project)
+    moduleComboBox.setModules(availableModules.asJavaCollection)
     // NOTE: this allows the selection to be empty only after combo box initialization
     // FIXME: Currently you can't unselect selected module, see: SCL-18054, IDEA-239791
     if (tabTypeData.is[DefaultProjectSettingsTab]) {
