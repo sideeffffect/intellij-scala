@@ -8,8 +8,14 @@ import org.jetbrains.annotations.Nls
 
 import javax.swing.Icon
 
+/**
+ * @param templateName name of the file template<br>
+ *                     It's defined in the plugin.xml file with the tag {{{<internalFileTemplate ... />}}}
+ *                     The actual template file full name includes extension `.scala.ft,`
+ *                     For example, `Scala CaseObject.scala.ft`.
+ */
 abstract class LazyFileTemplateAction(
-  templateName: String, // defined in plugin xml file with <internalFileTemplate ... /> tag
+  templateName: String,
   @Nls title: String,
   @Nls description: String,
   val icon: Icon
