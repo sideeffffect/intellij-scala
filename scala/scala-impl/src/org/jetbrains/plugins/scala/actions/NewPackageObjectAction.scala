@@ -12,6 +12,9 @@ import org.jetbrains.plugins.scala.extensions.{ObjectExt, PsiElementExt}
 import org.jetbrains.plugins.scala.icons.Icons
 import org.jetbrains.plugins.scala.project._
 
+/**
+ * @see [[NewScalaFileAction]]
+ */
 class NewPackageObjectAction extends LazyFileTemplateAction(
   "Package Object",
   ScalaBundle.message("new.packageobject.menu.action.text"),
@@ -66,6 +69,7 @@ class NewPackageObjectAction extends LazyFileTemplateAction(
     val properties = if (defaults != null) defaults.getDefaultProperties else null
     val dialog = new CreateFromTemplateDialog(project, directory, selectedTemplate, defaults, properties)
     val createdElement = dialog.create()
+    ScalaFileTemplateUtil.removeBracesIfIndentationBasedSyntaxIsEnabled(createdElement.getContainingFile)
     if (createdElement != null) {
       elementCreated(dialog, createdElement)
       Some(createdElement)
