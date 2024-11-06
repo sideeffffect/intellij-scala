@@ -251,7 +251,7 @@ private object ScalaMavenImporter {
     def localPathTo(id: MavenId): File = {
       val suffix = id.classifier.map("-" + _).getOrElse("")
       val jarName = s"${id.artifactId}-${id.version}$suffix.jar"
-      project.getLocalRepository / id.groupId.replaceAll("\\.", "/") /
+      project.getLocalRepositoryPath.toFile / id.groupId.replaceAll("\\.", "/") /
         id.artifactId / id.version / jarName
     }
   }
