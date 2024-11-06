@@ -377,6 +377,9 @@ package object project {
 
     def customDefaultImports: Option[Seq[String]] =
       scalaModuleSettings.flatMap(_.customDefaultImports)
+
+    def externalSystemId: Option[String] =
+      scalaModuleSettings.flatMap(_.externalSystemId)
   }
 
   class ScalaSdkNotConfiguredException(module: Module) extends IllegalArgumentException(s"No Scala SDK configured for module: ${module.getName}")

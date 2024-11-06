@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.scala.project
 
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
@@ -164,6 +165,9 @@ private class ScalaModuleSettings private(
       hasTrailingCommasEnabled = isTrailingCommasEnabled,
       hasUnderscoreWildcardsDisabled = kindProjectorUnderscorePlaceholdersEnabled || YKindProjectorUnderscoresOptionEnabled,
     )
+
+  lazy val externalSystemId: Option[String] =
+    Option(ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId)
 }
 
 private object ScalaModuleSettings {
