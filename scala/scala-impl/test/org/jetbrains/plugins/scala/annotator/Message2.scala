@@ -17,6 +17,8 @@ import scala.math.Ordered.orderingToOrdered
  */
 case class Message2(
   level: HighlightSeverity,
+  //TODO: let's replace range this line number+column...
+  // it's pretty difficult to see in the test files exactly where a message is
   range: TextRange,
   code: String,
   message: String,
