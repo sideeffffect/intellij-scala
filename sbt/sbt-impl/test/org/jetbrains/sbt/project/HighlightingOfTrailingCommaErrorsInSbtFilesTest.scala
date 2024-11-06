@@ -1,22 +1,18 @@
 package org.jetbrains.sbt.project
 
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.project.ProjectUtil
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.psi.{PsiErrorElement, PsiFile, PsiManager}
+import com.intellij.psi.{PsiErrorElement, PsiFile}
+import org.jetbrains.plugins.scala.SlowTests
 import org.jetbrains.plugins.scala.editor.DocumentExt
 import org.jetbrains.plugins.scala.extensions.{PsiElementExt, executeUndoTransparentAction, inWriteAction, invokeAndWait}
 import org.jetbrains.plugins.scala.project.ProjectPsiFileExt
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings.TrailingCommasMode
 import org.jetbrains.plugins.scala.util.{RevertableChange, TestUtils}
-import org.jetbrains.plugins.scala.SlowTests
 import org.jetbrains.sbt.project.HighlightingOfTrailingCommaErrorsInSbtFilesTest.{ParserError, withModifiedValue}
 import org.junit.Assert
-import org.junit.Assert.{assertNotNull, assertTrue}
+import org.junit.Assert.assertTrue
 import org.junit.experimental.categories.Category
-
-import java.io.File
 
 @Category(Array(classOf[SlowTests]))
 final class HighlightingOfTrailingCommaErrorsInSbtFilesTest extends SbtExternalSystemImportingTestLike {
@@ -85,23 +81,10 @@ final class HighlightingOfTrailingCommaErrorsInSbtFilesTest extends SbtExternalS
     relativeFileName: String,
     expectedErrors: Seq[ParserError]
   ): Unit = {
-    val buildSbtFile = findPsi(relativeFileName)
+    val buildSbtFile = TestUtils.findFileInProject(myProject, relativeFileName)
     insertTrailingCommaAfterMarker(buildSbtFile)
     val actualErrors = collectParserErrors(buildSbtFile)
     Assert.assertEquals(s"errors in `$relativeFileName` do not match", expectedErrors, actualErrors)
-  }
-
-  private def findPsi(relativeFileName: String): PsiFile = {
-    val projectRoot = ProjectUtil.guessProjectDir(myProject)
-    assertNotNull("project root not found", projectRoot)
-
-    val nioFile = new File(projectRoot.getPath + relativeFileName).toPath
-    val vFile = VirtualFileManager.getInstance().findFileByNioPath(nioFile)
-    assertNotNull(s"file `$relativeFileName` wasn't found", vFile)
-
-    val psi = PsiManager.getInstance(myProject).findFile(vFile)
-    assertNotNull(s"PSI for file `$relativeFileName` wasn't found`", vFile)
-    psi
   }
 
   private val TrailingCommaMarker = "\"TrailingCommaMarker\""

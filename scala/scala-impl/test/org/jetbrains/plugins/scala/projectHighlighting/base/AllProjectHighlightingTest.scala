@@ -6,7 +6,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.project.{DumbService, Project, ProjectUtil}
+import com.intellij.openapi.project.{DumbService, Project}
 import com.intellij.openapi.util.{Key, TextRange}
 import com.intellij.openapi.vfs.{LocalFileSystem, VirtualFile}
 import com.intellij.psi.impl.PsiManagerEx
@@ -20,8 +20,9 @@ import org.jetbrains.plugins.scala.lang.psi.api.{ScalaFile, ScalaPsiElement}
 import org.jetbrains.plugins.scala.project.ModuleExt
 import org.jetbrains.plugins.scala.projectHighlighting.base.AllProjectHighlightingTest.relativePathOf
 import org.jetbrains.plugins.scala.projectHighlighting.reporter.HighlightingProgressReporter
+import org.jetbrains.plugins.scala.util.TestUtils
 import org.jetbrains.plugins.scala.{ScalaFileType, ScalaLanguage}
-import org.junit.Assert.{assertNotNull, assertTrue}
+import org.junit.Assert.assertTrue
 
 import scala.jdk.CollectionConverters._
 import scala.util.Random
@@ -111,8 +112,7 @@ object AllProjectHighlightingTest {
 
   //NOTE: looks like there is no clean API which could provide a project root path
   private def guessProjectRootUrl(project: Project): String = {
-    val projectDir = ProjectUtil.guessProjectDir(project)
-    assertNotNull(s"Cannot guess directory of project ${project.getName}", projectDir)
+    val projectDir = TestUtils.guessProjectDir(project)
     projectDir.getUrl
   }
 
