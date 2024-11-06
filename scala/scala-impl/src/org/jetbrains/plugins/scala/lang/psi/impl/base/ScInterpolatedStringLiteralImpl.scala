@@ -15,9 +15,9 @@ import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
 import org.jetbrains.plugins.scala.lang.psi.impl.base.ScInterpolatedStringLiteralImpl.Log
 import org.jetbrains.plugins.scala.lang.psi.impl.base.literals.escapers.{ScLiteralEscaper, ScLiteralRawEscaper}
 import org.jetbrains.plugins.scala.lang.psi.types.result._
+import org.jetbrains.plugins.scala.scalaMeta.QuasiquoteInferUtil.{getMetaQQExprType, isMetaQQ}
 import org.jetbrains.plugins.scala.util.CommonQualifiedNames.StringContextCanonical
 
-import scala.meta.intellij.QuasiquoteInferUtil._
 import scala.util.control.NonFatal
 
 // todo: move to "literals" subpackage, but check usages

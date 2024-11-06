@@ -24,9 +24,9 @@ import org.jetbrains.plugins.scala.lang.psi.types.result._
 import org.jetbrains.plugins.scala.lang.psi.types.{api, _}
 import org.jetbrains.plugins.scala.lang.resolve._
 import org.jetbrains.plugins.scala.lang.resolve.processor.{CompletionProcessor, ExpandedExtractorResolveProcessor}
+import org.jetbrains.plugins.scala.scalaMeta.QuasiquoteInferUtil
 
 import scala.annotation.tailrec
-import scala.meta.intellij.QuasiquoteInferUtil
 
 trait ScPattern extends ScalaPsiElement with Typeable {
   def isIrrefutableFor(t: Option[ScType]): Boolean

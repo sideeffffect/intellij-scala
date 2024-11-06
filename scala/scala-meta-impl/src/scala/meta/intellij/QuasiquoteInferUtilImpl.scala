@@ -1,7 +1,6 @@
 package scala.meta.intellij
 
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.psi.PsiManager
 import org.jetbrains.plugins.scala.NlsString
 import org.jetbrains.plugins.scala.lang.psi.api.base.{ScInterpolated, ScInterpolatedStringLiteral, ScReference}
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScReferenceExpression
@@ -14,29 +13,30 @@ import org.jetbrains.plugins.scala.lang.psi.types.nonvalue.Parameter
 import org.jetbrains.plugins.scala.lang.psi.types.result._
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
 import org.jetbrains.plugins.scala.project.ProjectContext
+import org.jetbrains.plugins.scala.scalaMeta.QuasiquoteInferUtil
 
 import scala.annotation.{nowarn, switch}
+import scala.meta._
 import scala.meta.inputs.Input
-import scala.meta.parsers.{ParseException, Parsed}
-import scala.meta.{Dialect, ScalaMetaBundle, _}
+import scala.meta.parsers.Parsed
 
-object QuasiquoteInferUtil {
+class QuasiquoteInferUtilImpl extends QuasiquoteInferUtil {
 
   import scala.{meta => m}
 
-  def isMetaQQ(ref: ScReference): Boolean = {
+  override def isMetaQQ(ref: ScReference): Boolean = {
     ref.bind() match {
       case Some(ScalaResolveResult(fun: ScFunction, _)) if fun.name == "unapply" || fun.name == "apply" && isMetaQQ(fun) => true
       case _ => false
     }
   }
 
-  def isMetaQQ(fun: ScFunction): Boolean = {
+  override def isMetaQQ(fun: ScFunction): Boolean = {
     val fqnO = Option(fun.containingClass).flatMap(x=>Option(x.qualifiedName))
     fqnO.exists(_.startsWith("scala.meta.quasiquotes.Api.XtensionQuasiquote"))
   }
 
-  def getMetaQQExpectedTypes(srr: ScalaResolveResult, stringContextApplicationRef: ScReferenceExpression): Seq[Parameter] = {
+  override def getMetaQQExpectedTypes(srr: ScalaResolveResult, stringContextApplicationRef: ScReferenceExpression): Seq[Parameter] = {
     ProgressManager.checkCanceled()
     val interpolatorName = srr.element match {
       case fn: ScFunction if fn.isApplyMethod => fn.containingClass.name
@@ -70,7 +70,7 @@ object QuasiquoteInferUtil {
     }
   }
 
-  def getMetaQQExprType(pat: ScInterpolatedStringLiteral): TypeResult = {
+  override def getMetaQQExprType(pat: ScInterpolatedStringLiteral): TypeResult = {
     ProgressManager.checkCanceled()
     implicit val context: ProjectContext = pat.projectContext
 
@@ -96,7 +96,7 @@ object QuasiquoteInferUtil {
     }
   }
 
-  def getMetaQQPatternTypes(pat: ScInterpolationPatternImpl): Seq[String] = {
+  override def getMetaQQPatternTypes(pat: ScInterpolationPatternImpl): Seq[String] = {
     ProgressManager.checkCanceled()
     val prefix = pat.ref.refName
     val patternText = escapeQQ(pat)

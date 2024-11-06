@@ -200,7 +200,6 @@ object DependencyGroups {
     scalaLibrary,
     scalaReflect,
     scalaXml,
-    scalaMetaCore,
     scalapbRuntime,
     sbtStructureCore,
     evoInflector,

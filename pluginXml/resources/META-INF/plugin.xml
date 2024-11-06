@@ -62,6 +62,7 @@
     <xi:include href="/META-INF/debugger.xml"/>
     <xi:include href="/META-INF/scala-repl.xml"/>
     <xi:include href="/META-INF/structure-view.xml"/>
+    <xi:include href="/META-INF/scala-meta-impl.xml"/>
     <xi:include href="/META-INF/testing-support.xml"/>
     <xi:include href="/META-INF/uast.xml"/>
     <xi:include href="/META-INF/worksheet.xml"/>

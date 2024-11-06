@@ -53,6 +53,7 @@ lazy val scalaCommunity: sbt.Project =
       uast % "test->test;compile->compile",
       worksheet % "test->test;compile->compile",
       scalaImpl % "test->test;compile->compile",
+      scalaMetaImpl % "test->test;compile->compile",
       structureView % "test->test;compile->compile",
       sbtImpl % "test->test;compile->compile",
       compilerIntegration % "test->test;compile->compile",
@@ -390,6 +391,15 @@ lazy val scalaImpl: sbt.Project =
         Dependencies.scalaLibrary                          -> None,
         Dependencies.scala3Library                         -> None,
       )
+    )
+
+
+lazy val scalaMetaImpl: sbt.Project =
+  newProject("scala-meta-impl", file("scala/scala-meta-impl"))
+    .dependsOn(scalaImpl % "test->test;compile->compile")
+    .settings(
+      scalaVersion := Versions.scalaVersion,
+      libraryDependencies += Dependencies.scalaMetaCore,
     )
 
 /**
