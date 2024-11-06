@@ -29,6 +29,10 @@ import org.jetbrains.sbt.project.module.SbtModuleType
 import java.util.Properties
 import java.{util => ju}
 
+//TODO: cover this feature with tests. It might require writing custom base test classes
+/**
+ * @see [[NewPackageObjectAction]]
+ */
 final class NewScalaFileAction extends CreateTemplateInPackageAction[ScalaPsiElement](
   ScalaBundle.message("newclassorfile.menu.action.text"),
   ScalaBundle.message("newclassorfile.menu.action.description"),
@@ -62,6 +66,7 @@ final class NewScalaFileAction extends CreateTemplateInPackageAction[ScalaPsiEle
       }
     }
 
+    // Add user-defined file templates for .scala extension
     for {
       template <- FileTemplateManager.getInstance(project).getAllTemplates
 
@@ -110,19 +115,23 @@ final class NewScalaFileAction extends CreateTemplateInPackageAction[ScalaPsiEle
     super.postProcess(createdElement, templateName, customProperties)
     createdElement match {
       case file: ScalaFile =>
-        val project = file.getProject
-        val editor = FileEditorManager.getInstance(project).getSelectedTextEditor
-        if (editor != null) {
-          val document = editor.getDocument
-          if (document == file.getViewProvider.getDocument) {
-            val lineCount = document.getLineCount
-            if (lineCount > 0) {
-              // move the caret to the beginning of the last line
-              editor.getCaretModel.moveToLogicalPosition(new LogicalPosition(lineCount - 1, 0))
-            }
-          }
-        }
+        moveTheCaretToTheLastLine(file)
       case _ =>
+    }
+  }
+
+  private def moveTheCaretToTheLastLine(file: ScalaFile): Unit = {
+    val project = file.getProject
+    val editor = FileEditorManager.getInstance(project).getSelectedTextEditor
+    if (editor != null) {
+      val document = editor.getDocument
+      if (document == file.getViewProvider.getDocument) {
+        val lineCount = document.getLineCount
+        if (lineCount > 0) {
+          // move the caret to the beginning of the last line
+          editor.getCaretModel.moveToLogicalPosition(new LogicalPosition(lineCount - 1, 0))
+        }
+      }
     }
   }
 
@@ -200,6 +209,7 @@ object NewScalaFileAction {
     val factory: PsiFileFactory = PsiFileFactory.getInstance(project)
     val scalaFileType = ScalaFileType.INSTANCE
     val file: PsiFile = factory.createFileFromText(s"$name.${scalaFileType.getDefaultExtension}", scalaFileType, text)
+    ScalaFileTemplateUtil.removeBracesIfIndentationBasedSyntaxIsEnabled(file)
     CodeStyleManager.getInstance(project).reformat(file)
     directory.add(file).asInstanceOf[PsiFile]
   }
