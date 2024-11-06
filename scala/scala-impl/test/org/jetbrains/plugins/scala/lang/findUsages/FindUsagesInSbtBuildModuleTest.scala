@@ -1,9 +1,8 @@
 package org.jetbrains.plugins.scala.lang.findUsages
 
 import com.intellij.find.findUsages.FindUsagesOptions
-import com.intellij.openapi.project.ProjectUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.{PsiFile, PsiManager, PsiNamedElement}
+import com.intellij.psi.{PsiFile, PsiNamedElement}
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
 import org.jetbrains.plugins.scala.SlowTests
@@ -11,7 +10,7 @@ import org.jetbrains.plugins.scala.extensions.PsiElementExt
 import org.jetbrains.plugins.scala.findUsages.factory.{ScalaFindUsagesConfiguration, ScalaFindUsagesHandler, ScalaTypeDefinitionFindUsagesOptions}
 import org.jetbrains.plugins.scala.util.TestUtils
 import org.jetbrains.sbt.project.{SbtCachesSetupUtil, SbtExternalSystemImportingTestLike}
-import org.junit.Assert.{assertEquals, assertNotNull, fail}
+import org.junit.Assert.{assertEquals, fail}
 import org.junit.experimental.categories.Category
 
 import scala.collection.mutable
@@ -32,33 +31,16 @@ class FindUsagesInSbtBuildModuleTest extends SbtExternalSystemImportingTestLike 
 
   //https://youtrack.jetbrains.com/issue/SCL-8698/Find-usages-doesnt-search-inside-build.sbt
   def testFindUsageOfDefinitionInBuildModuleScalaFileInBuildSbtFile(): Unit = {
-    val psiFile = findFileInProject("project/BuildCommons.scala")
+    val psiFile = TestUtils.findFileInProject(getProject, "project/BuildCommons.scala")
     assertDefinitionFoundInFiles(psiFile, "myLibraryVersion1", Seq("build.sbt", "other.sbt", "project/BuildUtils.scala"))
     assertDefinitionFoundInFiles(psiFile, "myLibraryVersion2", Seq("build.sbt", "other.sbt", "project/BuildUtils.scala"))
-  }
-
-  private def getProjectDir: VirtualFile = {
-    val file = ProjectUtil.guessProjectDir(myTestFixture.getProject)
-    assertNotNull(s"Can't guess project dir", file)
-    file
-  }
-
-  private def findFileInProject(relativePath: String): PsiFile = {
-    val projectDir = getProjectDir
-
-    val vFile = projectDir.findFileByRelativePath(relativePath)
-    assertNotNull(s"Can't find virtual file ${projectDir.getCanonicalPath}/$relativePath", vFile)
-
-    val psiFile = PsiManager.getInstance(myTestFixture.getProject).findFile(vFile)
-    assertNotNull(s"Can't psi file for $vFile", psiFile)
-    psiFile
   }
 
   private def assertDefinitionFoundInFiles(psiFile: PsiFile, definitionName: String, expectedFoundFileNames: Seq[String]): Unit = {
     val namedElement = findNamedElement(psiFile, definitionName)
     val usages = findUsages(namedElement)
     val foundFiles = usages.map(_.getVirtualFile)
-    val actualFoundFileNames = foundFiles.map(relativePath(getProjectDir, _)).sorted
+    val actualFoundFileNames = foundFiles.map(relativePath(TestUtils.guessProjectDir(getProject), _)).sorted
     assertEquals(
       "File names with found usages",
       expectedFoundFileNames.sorted,
