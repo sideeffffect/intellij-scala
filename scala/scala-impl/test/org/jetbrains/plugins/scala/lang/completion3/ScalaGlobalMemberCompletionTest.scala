@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.scala.lang.completion3
 
 import com.intellij.codeInsight.completion.JavaCompletionUtil.getAllMethods
-import org.jetbrains.plugins.scala.base.libraryLoaders.{LibraryLoader, SourcesLoader}
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.completion.lookups.ScalaLookupItem
 import org.jetbrains.plugins.scala.lang.completion3.base.ScalaCompletionTestBase
@@ -14,7 +13,7 @@ class ScalaGlobalMemberCompletionTest extends ScalaCompletionTestBase {
   override def getTestDataPath: String =
     s"${super.getTestDataPath}globalMember"
 
-  override def additionalLibraries: Seq[LibraryLoader] = Seq(SourcesLoader(getTestDataPath))
+  override protected def sourceRootPath: String = getTestDataPath
 
   def testGlobalMember1(): Unit = doCompletionTest(
     fileText =

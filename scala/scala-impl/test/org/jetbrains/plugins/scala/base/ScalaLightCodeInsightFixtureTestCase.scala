@@ -20,7 +20,7 @@ import com.intellij.testFramework.{EditorTestUtil, IdeaTestUtil, LightProjectDes
 import com.intellij.util.lang.JavaVersion
 import org.intellij.lang.annotations.Language
 import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.plugins.scala.base.libraryLoaders.{LibraryLoader, ScalaSDKLoader, SourcesLoader}
+import org.jetbrains.plugins.scala.base.libraryLoaders.{LibraryLoader, ScalaSDKLoader}
 import org.jetbrains.plugins.scala.extensions.{ObjectExt, StringExt}
 import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
@@ -29,6 +29,7 @@ import org.jetbrains.plugins.scala.{ScalaFileType, ScalaLanguage}
 import org.junit.Assert
 import org.junit.Assert.fail
 
+import java.nio.file.Path
 import scala.jdk.CollectionConverters._
 
 //TODO: try to remove EditorTestUtil.buildInitialFoldingsInBackground(getEditor) and see if tests pass?
@@ -69,11 +70,8 @@ abstract class ScalaLightCodeInsightFixtureTestCase
 
   override protected def librariesLoaders: Seq[LibraryLoader] = {
     val scalaSdkLoader = ScalaSDKLoader(includeReflectLibrary, includeCompilerAsLibrary, includeScalaLibrarySources = includeScalaLibrarySources)
-    //note: do we indeed need to register it as libraries?
-    // shouldn't source roots be registered just as source roots?
-    val sourceLoaders = Option(sourceRootPath).map(SourcesLoader).toSeq
     val additionalLoaders = additionalLibraries
-    scalaSdkLoader +: sourceLoaders :++ additionalLoaders
+    scalaSdkLoader +: additionalLoaders
   }
   //end section: project libraries configuration
 
@@ -103,7 +101,10 @@ abstract class ScalaLightCodeInsightFixtureTestCase
    * @note If you are overriding this method, most likely, the light project cannot be shared between subsequent
    *       test invocations. Look into also overriding [[sharedProjectToken]].
    */
-  protected def afterSetUpProject(project: Project, module: Module): Unit = {
+  private def afterSetUpProject(project: Project, module: Module): Unit = {
+    if (sourceRootPath ne null) {
+      SourceRootTestUtil.addSourceRoot(module, Path.of(sourceRootPath))
+    }
     setUpLibraries(module)
   }
 

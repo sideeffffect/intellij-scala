@@ -8,8 +8,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.EdtTestUtil
-import org.jetbrains.plugins.scala.base.ScalaSdkOwner
-import org.jetbrains.plugins.scala.base.libraryLoaders.{HeavyJDKLoader, LibraryLoader, ScalaSDKLoader, SmartJDKLoader, SourcesLoader}
+import org.jetbrains.plugins.scala.base.libraryLoaders.{HeavyJDKLoader, LibraryLoader, ScalaSDKLoader, SmartJDKLoader}
+import org.jetbrains.plugins.scala.base.{ScalaSdkOwner, SourceRootTestUtil}
 import org.jetbrains.plugins.scala.project.ModuleExt
 import org.jetbrains.plugins.scala.util.TestUtils
 
@@ -58,8 +58,7 @@ trait ScalaExecutionTestCase extends ExecutionTestCase with ScalaSdkOwner {
 
   override protected def librariesLoaders: Seq[LibraryLoader] = Seq(
     ScalaSDKLoader(includeScalaReflectIntoCompilerClasspath = true),
-    HeavyJDKLoader(testProjectJdkVersion),
-    SourcesLoader(srcPath.toString)
+    HeavyJDKLoader(testProjectJdkVersion)
   ) ++ additionalLibraries
 
   protected def additionalLibraries: Seq[LibraryLoader] = Seq.empty
@@ -77,6 +76,7 @@ trait ScalaExecutionTestCase extends ExecutionTestCase with ScalaSdkOwner {
   override protected def setUpModule(): Unit = {
     super.setUpModule()
     EdtTestUtil.runInEdtAndWait { () =>
+      SourceRootTestUtil.addSourceRoot(getModule, srcPath)
       setUpLibraries(getModule)
     }
   }

@@ -1,8 +1,7 @@
 package org.jetbrains.plugins.scala.lang.completion3
 
-import org.jetbrains.plugins.scala.base.libraryLoaders.{LibraryLoader, SourcesLoader}
-import org.jetbrains.plugins.scala.lang.completion3.base.ScalaCompletionTestBase
 import org.jetbrains.plugins.scala.ScalaVersion
+import org.jetbrains.plugins.scala.lang.completion3.base.ScalaCompletionTestBase
 
 class Scala3GlobalMemberCompletionTest extends ScalaCompletionTestBase {
   override protected def supportedIn(version: ScalaVersion) = version >= ScalaVersion.Latest.Scala_3_0
@@ -10,7 +9,7 @@ class Scala3GlobalMemberCompletionTest extends ScalaCompletionTestBase {
   override def getTestDataPath: String =
     s"${super.getTestDataPath}globalMember3"
 
-  override def additionalLibraries: Seq[LibraryLoader] = Seq(SourcesLoader(getTestDataPath))
+  override protected def sourceRootPath: String = getTestDataPath
 
   def testExtensionMethod(): Unit = doCompletionTest(
     fileText =

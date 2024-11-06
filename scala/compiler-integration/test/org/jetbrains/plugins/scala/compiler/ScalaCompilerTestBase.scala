@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs._
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework._
 import com.intellij.testFramework.common.ThreadLeakTracker
+import org.jetbrains.plugins.scala.base.SourceRootTestUtil
 
 import java.nio.file.Path
 //noinspection ApiStatus
@@ -66,6 +67,7 @@ abstract class ScalaCompilerTestBase extends JavaModuleTestCase with ScalaSdkOwn
     addSrcRoot()
     compilerVmOptions.foreach(setCompilerVmOptions)
 
+    SourceRootTestUtil.addSourceRoot(getModule, getSourceRootDir.toNioPath)
     setUpLibraries(getModule)
     ScalaCompilerConfiguration.instanceIn(myProject).incrementalityType = incrementalityType
     compilerTester = new CompilerTester(myProject, java.util.List.of(getModule), null, false)
@@ -115,8 +117,7 @@ abstract class ScalaCompilerTestBase extends JavaModuleTestCase with ScalaSdkOwn
 
   override protected def librariesLoaders: Seq[LibraryLoader] = Seq(
     ScalaSDKLoader(includeReflectLibrary, includeCompilerAsLibrary, compilerBridgeBinaryJar = compilerBridgeBinaryJar),
-    HeavyJDKLoader(testProjectJdkVersion),
-    SourcesLoader(getSourceRootDir.getCanonicalPath)
+    HeavyJDKLoader(testProjectJdkVersion)
   ) ++ additionalLibraries
 
   override def defaultJdkVersion: LanguageLevel =
