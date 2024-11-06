@@ -5,7 +5,8 @@ import com.intellij.openapi.project.{Project, ProjectUtil}
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.{PsiComment, PsiFile}
+import com.intellij.psi.{PsiComment, PsiFile, PsiManager}
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
 import org.junit.Assert
 import org.junit.Assert.{assertNotNull, fail}
@@ -14,6 +15,7 @@ import java.io.{File, IOException}
 import java.net.URISyntaxException
 import java.nio.file.Path
 import java.util
+import scala.util.chaining.scalaUtilChainingOps
 
 object TestUtils {
 
@@ -171,11 +173,31 @@ object TestUtils {
     ExpectedResultFromLastComment(fileTextWithoutLastComment, commentInnerContent.trim)
   }
 
-  def getPathRelativeToProject(file: VirtualFile, project: Project): String = {
-    val projectRoot = ProjectUtil.guessProjectDir(project)
-    assertNotNull(s"Can't guess project dir", file)
+  @NotNull
+  @throws[AssertionError]
+  def guessProjectDir(@NotNull project: Project): VirtualFile = ProjectUtil.guessProjectDir(project).tap { file =>
+    assertNotNull(s"Cannot guess directory of project ${project.getName}", file)
+  }
+
+  @throws[AssertionError]
+  def getPathRelativeToProject(file: VirtualFile, @NotNull project: Project): String = {
+    val projectRoot = guessProjectDir(project)
     val pathParent = projectRoot.getPath
     val pathChild = file.getPath
     pathChild.stripPrefix(pathParent).stripPrefix("/")
+  }
+
+  @NotNull
+  @throws[AssertionError]
+  def findFileInProject(@NotNull project: Project, relativePath: String): PsiFile = {
+    val projectDir = guessProjectDir(project)
+
+    val vFile = projectDir.findFileByRelativePath(relativePath)
+    assertNotNull(s"Can't find virtual file ${projectDir.getCanonicalPath}/$relativePath", vFile)
+
+    //noinspection DfaNullableToNotNullParam
+    PsiManager.getInstance(project).findFile(vFile).tap { psiFile =>
+      assertNotNull(s"Can't psi file for $vFile", psiFile)
+    }
   }
 }
