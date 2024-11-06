@@ -88,15 +88,15 @@ private class ScalaTrailingCommaVisitor(settings: CodeStyleSettings) extends Sca
   }
 
   override def visitNamedTuple(tuple: ScNamedTuple): Unit = {
-    doVisit(tuple, super.visitNamedTuple, TRAILING_COMMA_NAMED_TUPLE_ENABLED)(_.components.lastOption)
+    doVisit(tuple, super.visitNamedTuple, TRAILING_COMMA_TUPLE_ENABLED)(_.components.lastOption)
   }
 
   override def visitTupleTypeElement(tuple: ScTupleTypeElement): Unit = {
-    doVisit(tuple, super.visitTupleTypeElement, TRAILING_COMMA_TUPLE_TYPE_ENABLED)(_.components.lastOption)
+    doVisit(tuple, super.visitTupleTypeElement, TRAILING_COMMA_TUPLE_ENABLED)(_.components.lastOption)
   }
 
   override def visitNamedTupleTypeElement(tuple: ScNamedTupleTypeElement): Unit = {
-    doVisit(tuple, super.visitNamedTupleTypeElement, TRAILING_COMMA_NAMED_TUPLE_TYPE_ENABLED)(_.components.lastOption)
+    doVisit(tuple, super.visitNamedTupleTypeElement, TRAILING_COMMA_TUPLE_ENABLED)(_.components.lastOption)
   }
 
   override def visitPattern(pat: ScPattern): Unit = {
@@ -107,7 +107,7 @@ private class ScalaTrailingCommaVisitor(settings: CodeStyleSettings) extends Sca
           _.patternList.flatMap(_.patterns.lastOption)
         }
       case tuple: ScNamedTuplePattern =>
-        doVisit(tuple, (_: ScNamedTuplePattern) => (), TRAILING_COMMA_NAMED_TUPLE_PATTERN_ENABLED) {
+        doVisit(tuple, (_: ScNamedTuplePattern) => (), TRAILING_COMMA_PATTERN_ARG_LIST_ENABLED) {
           _.components.lastOption
         }
       case _ =>
