@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.{Key, Segment, TextRange}
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile}
-import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.{Nullable, TestOnly}
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.dependency.{Dependency, DependencyPath}
 import org.jetbrains.plugins.scala.lang.psi.ScImportsHolder
@@ -51,14 +51,23 @@ final class Associations private(override val associations: Array[Association])
     }
   }
 
-  private def getBindingsForOffset(offset: Int)
-                                  (implicit file: PsiFile): Seq[Binding] = for {
-    association <- associations.toSeq
-    reference <- referenceFor(association, offset)
+  private def getBindingsForOffset(offset: Int)(implicit file: PsiFile): Seq[Binding] = {
+    val size = associations.length
+    @Nullable val indicator = ProgressManager.getInstance().getProgressIndicator
+    associations.zipWithIndex.toSeq.flatMap { case (association, index) =>
+      if (indicator ne null) {
+        indicator.checkCanceled()
+        val fraction = (index + 1).toDouble / size
+        indicator.setFraction(fraction)
+      }
 
-    path = association.path.asString()
-    if hasNonDefaultPackage(path)
-  } yield Binding(reference, path)
+      val path = association.path.asString()
+      if (hasNonDefaultPackage(path))
+        referenceFor(association, offset).map(reference => Binding(reference, path))
+      else
+        None
+    }
+  }
 }
 
 object Associations extends AssociationsData.Companion(classOf[Associations], "ScalaReferenceData") {
