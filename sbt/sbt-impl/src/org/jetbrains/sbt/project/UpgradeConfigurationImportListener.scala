@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.scala.extensions.invokeWhenSmart
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
-import org.jetbrains.sbt.project.MigrateConfigurationsDialogWrapper.isTemporaryConfig
+import org.jetbrains.sbt.project.MigrateConfigurationsDialogWrapper.ModuleConfigurationExt
 import org.jetbrains.sbt.project.SbtMigrateConfigurationsAction.{IsDowngradingFromSeparateMainTestModules, ModuleConfiguration, ModuleHeuristicResult, getConfigurationToHeuristicResult}
 import org.jetbrains.sbt.{SbtBundle, SbtUtil}
 
@@ -49,7 +49,7 @@ class UpgradeConfigurationImportListener(project: Project) extends ProjectDataIm
          2. If there is an issue with the heuristic, the user can call `SbtMigrateConfigurationsAction` explicitly and manually apply changes to the configuration modules.
          */
         val notModifiedConfigurations = applyHeuristicResultsIfPossible(configToHeuristicResult)
-        val containsNonTemporaryConfigs = notModifiedConfigurations.exists { case (config, _) => !isTemporaryConfig(config) }
+        val containsNonTemporaryConfigs = notModifiedConfigurations.exists { case (config, _) => !config.isTemporary }
         if (containsNonTemporaryConfigs) {
           showNotification(isDowngrading)
         }
