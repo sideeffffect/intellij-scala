@@ -1,7 +1,7 @@
 package org.jetbrains.sbt.project
 
 import com.intellij.application.options.ModulesComboBox
-import com.intellij.execution.RunManager
+import com.intellij.execution.{RunManager, RunnerAndConfigurationSettings}
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.table.JBTable
@@ -17,7 +17,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.{LayeredIcon, SimpleTextAttributes, SortedComboBoxModel}
 import com.intellij.util.ui.EmptyIcon
 import org.jetbrains.sbt.SbtBundle
-import org.jetbrains.sbt.project.MigrateConfigurationsDialogWrapper.{TableCellRendererWithLeftMargin, isTemporaryConfig}
+import org.jetbrains.sbt.project.MigrateConfigurationsDialogWrapper.{ConfigDisplayOptions, TableCellRendererWithLeftMargin, ModuleConfigurationExt}
 import org.jetbrains.sbt.project.SbtMigrateConfigurationsAction.{ModuleConfiguration, ModuleHeuristicResult}
 
 import java.awt.event.MouseEvent
@@ -35,23 +35,9 @@ class MigrateConfigurationsDialogWrapper(modules: Seq[Module], configurationToMo
     createComboBoxCellEditor(heuristicResult.guesses)
   }.toMap
 
-  private case class ConfigDisplayOptions(isTemporary: Boolean, isShared: Boolean)
-
-  private object ConfigDisplayOptions {
-    def apply(config: ModuleConfiguration): ConfigDisplayOptions  =
-      ConfigDisplayOptions(
-        isTemporary = isTemporaryConfig(config),
-        isShared = isShared(config)
-      )
-
-    private def isShared(config: ModuleConfiguration): Boolean = {
-      val project = config.getProject
-      val settings = RunManager.getInstance(project).findSettings(config)
-      Option(settings).exists(_.isShared)
-    }
-  }
-
-  private val configToDisplayOptions = configurationToModule.keys.map { config => config -> ConfigDisplayOptions(config) }.toMap
+  private val configToDisplayOptions = configurationToModule.keys.map { config =>
+    config -> new ConfigDisplayOptions(isTemporary = config.isTemporary, isShared = config.isShared)
+  }.toMap
 
   private def createComboBoxCellEditor(namesToKeepOnTop: Seq[String]): DefaultCellEditor = {
     // Creating a SortedComboBoxModel in this way and injecting it via javax.swing.JComboBox.setModel is a workaround,
@@ -225,10 +211,17 @@ class MigrateConfigurationsDialogWrapper(modules: Seq[Module], configurationToMo
 
 object MigrateConfigurationsDialogWrapper {
 
-  def isTemporaryConfig(config: ModuleConfiguration): Boolean = {
-    val project = config.getProject
-    val settings = RunManager.getInstance(project).findSettings(config)
-    Option(settings).exists(_.isTemporary)
+  private class ConfigDisplayOptions(val isTemporary: Boolean, val isShared: Boolean)
+
+  implicit class ModuleConfigurationExt(config: ModuleConfiguration) {
+    def isShared: Boolean = getSettings.exists(_.isShared)
+
+    def isTemporary: Boolean = getSettings.exists(_.isTemporary)
+
+    private def getSettings: Option[RunnerAndConfigurationSettings] = {
+      val project = config.getProject
+      Option(RunManager.getInstance(project).findSettings(config))
+    }
   }
 
   /**
