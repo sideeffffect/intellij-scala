@@ -1,6 +1,7 @@
 package org.jetbrains.sbt.project
 
 import com.intellij.application.options.ModulesComboBox
+import com.intellij.execution.RunManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.table.JBTable
@@ -13,7 +14,7 @@ import com.intellij.execution.configurations.{ModuleBasedConfiguration, RunConfi
 import com.intellij.openapi.module.Module
 import com.intellij.ui.SortedComboBoxModel
 import org.jetbrains.sbt.SbtBundle
-import org.jetbrains.sbt.project.SbtMigrateConfigurationsAction.ModuleHeuristicResult
+import org.jetbrains.sbt.project.SbtMigrateConfigurationsAction.{ModuleConfiguration, ModuleHeuristicResult}
 
 import java.awt.event.MouseEvent
 import java.util.Comparator
@@ -180,6 +181,14 @@ class MigrateConfigurationsDialogWrapper(modules: Seq[Module], configurationToMo
   }
 }
 
+object MigrateConfigurationsDialogWrapper {
+
+  def isTemporaryConfig(config: ModuleConfiguration): Boolean = {
+    val project = config.getProject
+    val settings = RunManager.getInstance(project).findSettings(config)
+    Option(settings).exists(_.isTemporary)
+  }
+}
 /**
  * A comparator for modules that prioritizes specified modules before
  * performing a case-insensitive alphabetical comparison based on their names.
