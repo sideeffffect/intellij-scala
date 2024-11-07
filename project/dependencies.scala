@@ -89,7 +89,6 @@ object Dependencies {
   val scalaXml: ModuleID = "org.scala-lang.modules" %% "scala-xml" % "2.3.0"
   val tastyCore: ModuleID = "org.scala-lang" % "tasty-core_3" % Versions.scala3Version
   val scalaParallelCollections: ModuleID = "org.scala-lang.modules" %% "scala-parallel-collections" % "0.2.0"
-  //  val scalaParserCombinators: ModuleID = "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2"
   // this actually needs the explicit version because something in packager breaks otherwise (???)
   val sbtStructureCore: ModuleID = "org.jetbrains.scala" %% "sbt-structure-core" % sbtStructureVersion
   val evoInflector: ModuleID = "org.atteo" % "evo-inflector" % "1.3"
@@ -120,6 +119,8 @@ object Dependencies {
 
   val ivy2: ModuleID = "org.apache.ivy" % "ivy" % "2.5.2"
 
+  // Transitive dependency of scalastyle. The version is deliberately outdated, to keep compatibility with scalastyle.
+  val scalaParserCombinators: ModuleID = "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2"
   val scalastyle: ModuleID = "com.beautiful-scala" %% "scalastyle" % "1.5.1"
 
   // "io.get-coursier" % "interface" is a large jar (over 3 megabytes) that is packaged as a whole application.
@@ -205,7 +206,6 @@ object DependencyGroups {
     evoInflector,
     directories,
     ivy2,
-    scalastyle,
     compilerIndicesProtocol,
     scalafmtDynamic
   )

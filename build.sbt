@@ -354,6 +354,7 @@ lazy val scalaImpl: sbt.Project =
       runners,
       testRunners,
       packageSearchClient % "test->test;compile->compile",
+      scalastyleIntegration
     )
     .settings(
       ideExcludedDirectories := Seq(
@@ -764,6 +765,13 @@ lazy val mlCompletionIntegration =
       resolvers += DependencyResolvers.IntelliJDependencies,
       libraryDependencies += "org.jetbrains.intellij.deps.completion" % "completion-ranking-scala" % "0.4.1"
     )
+
+lazy val scalastyleIntegration = newProject("scalastyle", file("scala/integration/scalastyle"))
+  .dependsOn(scalaApi)
+  .settings(
+    libraryDependencies += Dependencies.scalastyle,
+    packageLibraryMappings += (Dependencies.scalaParserCombinators -> Some("lib/scala-parser-combinators.jar"))
+  )
 
 //Integration with:
 // - Build-in spellchecker (see com.intellij.spellchecker package)

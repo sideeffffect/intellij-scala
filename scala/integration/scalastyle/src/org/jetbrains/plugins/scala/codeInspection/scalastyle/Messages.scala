@@ -6,7 +6,7 @@ import java.text.MessageFormat
 import java.util.Properties
 import scala.util.Using
 
-object Messages {
+private object Messages {
 
   private lazy val messages =
     Using(getClass.getResourceAsStream("/reference.conf")) { conf =>
