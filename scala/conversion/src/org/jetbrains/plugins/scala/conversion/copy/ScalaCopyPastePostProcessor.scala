@@ -1,12 +1,15 @@
 package org.jetbrains.plugins.scala.conversion.copy
 
 import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.editor.richcopy.settings.RichCopySettings
 import com.intellij.openapi.editor.{Editor, RangeMarker}
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.{DumbService, Project}
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.{Ref, TextRange}
 import com.intellij.psi._
+import org.jetbrains.plugins.scala.conversion.ScalaConversionBundle
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 import org.jetbrains.plugins.scala.lang.refactoring._
 import org.jetbrains.plugins.scala.settings._
@@ -52,22 +55,31 @@ class ScalaCopyPastePostProcessor extends SingularCopyPastePostProcessor[Associa
 
     PsiDocumentManager.getInstance(project).commitAllDocuments()
 
-    associations.restore(bounds) {
-      case bindings if setting == ASK =>
-        val bindingsSorted = bindings.filterNot(_.path.isEmpty).sortBy(_.path)
-        if (bindingsSorted.nonEmpty) {
-          val dialog = new RestoreReferencesDialog(project, bindingsSorted, file.features, editor.getColorsScheme)
-          dialog.show()
-          dialog.getExitCode match {
-            case DialogWrapper.OK_EXIT_CODE =>
-              val selectedElements = dialog.getSelectedElements
-              bindingsSorted.filter(selectedElements.contains)
-            case _ => Seq.empty
+    val title = ScalaConversionBundle.message("processing.imports.title")
+    val performUnderProgress: java.util.function.Consumer[ProgressIndicator] = { indicator =>
+      indicator.setIndeterminate(false)
+      indicator.setFraction(0)
+      associations.restore(bounds) {
+        case bindings if setting == ASK =>
+          val bindingsSorted = bindings.filterNot(_.path.isEmpty).sortBy(_.path)
+          if (bindingsSorted.nonEmpty) {
+            val dialog = new RestoreReferencesDialog(project, bindingsSorted, file.features, editor.getColorsScheme)
+            dialog.show()
+            dialog.getExitCode match {
+              case DialogWrapper.OK_EXIT_CODE =>
+                val selectedElements = dialog.getSelectedElements
+                bindingsSorted.filter(selectedElements.contains)
+              case _ => Seq.empty
+            }
           }
-        }
-        else Seq.empty
-      case bindings =>
-        bindings
+          else Seq.empty
+        case bindings =>
+          bindings
+      }
     }
+
+    //noinspection ApiStatus
+    ApplicationManagerEx.getApplicationEx.runWriteActionWithCancellableProgressInDispatchThread(
+      title, project, null, performUnderProgress)
   }
 }
