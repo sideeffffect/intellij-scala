@@ -1,6 +1,5 @@
 package org.jetbrains.sbt.project
 
-import com.intellij.execution.RunManager
 import com.intellij.ide.impl.TrustedProjects
 import com.intellij.notification.{Notification, NotificationAction, NotificationGroupManager, NotificationType}
 import com.intellij.openapi.actionSystem.{ActionManager, AnActionEvent, CustomizedDataContext}
@@ -10,6 +9,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.scala.extensions.invokeWhenSmart
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerConfiguration
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
+import org.jetbrains.sbt.project.MigrateConfigurationsDialogWrapper.isTemporaryConfig
 import org.jetbrains.sbt.project.SbtMigrateConfigurationsAction.{IsDowngradingFromSeparateMainTestModules, ModuleConfiguration, ModuleHeuristicResult, getConfigurationToHeuristicResult}
 import org.jetbrains.sbt.{SbtBundle, SbtUtil}
 
@@ -49,24 +49,13 @@ class UpgradeConfigurationImportListener(project: Project) extends ProjectDataIm
          2. If there is an issue with the heuristic, the user can call `SbtMigrateConfigurationsAction` explicitly and manually apply changes to the configuration modules.
          */
         val notModifiedConfigurations = applyHeuristicResultsIfPossible(configToHeuristicResult)
-        val shouldShowNotification = hasInvalidSavedConfig(notModifiedConfigurations)
-        if (shouldShowNotification) {
+        val containsNonTemporaryConfigs = notModifiedConfigurations.exists { case (config, _) => !isTemporaryConfig(config) }
+        if (containsNonTemporaryConfigs) {
           showNotification(isDowngrading)
         }
       }
       setNotificationShown()
     }
-  }
-
-  private def hasInvalidSavedConfig(configToHeuristicResult: Seq[(ModuleConfiguration, ModuleHeuristicResult)]): Boolean = {
-    val runManager = RunManager.getInstance(project)
-
-    def isSavedInFile(config: ModuleConfiguration) = {
-      val settings = runManager.findSettings(config)
-      Option(settings).forall(_.isShared)
-    }
-
-    configToHeuristicResult.exists { case (config, _) => isSavedInFile(config) }
   }
 
   // ScalaCompilerConfiguration.separateProdTestSources was initially created to record whether a project was imported
