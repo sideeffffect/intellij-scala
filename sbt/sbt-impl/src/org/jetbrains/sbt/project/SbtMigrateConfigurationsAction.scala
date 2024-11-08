@@ -187,7 +187,7 @@ object SbtMigrateConfigurationsAction {
     val javaRunConfigurationModuleOpt = extractJavaRunConfigurationModule(config)
 
     (mainClassNameOpt, javaRunConfigurationModuleOpt) match {
-      case (Some(mainClass), Some(javaRunConfigurationModule)) =>
+      case (Some(mainClass), Some(javaRunConfigurationModule)) if mainClass.nonEmpty =>
         runSmartReadAction(project) {
           val psiClass = javaRunConfigurationModule.findClass(mainClass)
           psiClass == null
