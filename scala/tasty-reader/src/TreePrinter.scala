@@ -525,7 +525,7 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
           textOfType(tail)
         else {
           textOfType(tail) + "." + id(name) +
-            (if (parent.forall(_.is(SINGLETONtpt))) ".type" else "") // TODO Why there is sometimes no SINGLETONtpt? (add RHS?)
+            (if (parent.forall(it => it.is(SINGLETONtpt) || it.is(APPLIEDtype))) ".type" else "") // TODO Why there is sometimes no SINGLETONtpt? (add RHS?)
         }
       case Node3(THIS, _, Seq(tail)) =>
         val qualifier = textOfType(tail)
@@ -1030,7 +1030,7 @@ class TreePrinter(privateMembers: Boolean = false, infixTypes: Boolean = false, 
         sb ++= " >: " + simple(l)
       }
       val u = textOfType(upper)
-      if (u.nonEmpty && u != "_root_.scala.Any") {
+      if (u.nonEmpty && u != "_root_.scala.Any" && u != "_root_.`<special-ops>`.`<FromJavaObject>`") {
         sb ++= " <: " + simple(u)
       }
     case _ => // TODO exhaustive match

@@ -9,11 +9,7 @@ class PlayTest extends TextToTextTestBase(
   ),
   Seq("controllers", "models", "play", "views"), Set.empty, 620,
   Set(
-    "play.api.http.AcceptEncoding", // None without .type
-    "play.api.http.MediaRange", // None without .type
     "play.api.libs.crypto.CSRFTokenSigner", // No @deprecated annotation
-    "play.api.libs.json.jackson.PlayDeserializers", // FromJavaObject
-    "play.api.libs.json.jackson.PlaySerializers", // FromJavaObject
     "play.api.mvc.ActionBuilder", // Extra [Nothing] type argument
     "play.api.mvc.DefaultActionBuilderImpl", // Extra [Nothing] type argument
     "play.api.mvc.DefaultMessagesActionBuilderImpl", // Extra [Nothing] type argument
