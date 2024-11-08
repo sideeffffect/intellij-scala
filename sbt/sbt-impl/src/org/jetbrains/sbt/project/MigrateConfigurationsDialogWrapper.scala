@@ -1,25 +1,30 @@
 package org.jetbrains.sbt.project
 
 import com.intellij.application.options.ModulesComboBox
+import com.intellij.execution.{RunManager, RunnerAndConfigurationSettings}
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.table.JBTable
 import com.intellij.uiDesigner.core.{GridConstraints, GridLayoutManager}
 
-import java.awt.{Dimension, Font}
+import java.awt.{Component, Dimension}
 import javax.swing._
 import javax.swing.table.{DefaultTableCellRenderer, DefaultTableModel, TableCellEditor}
-import com.intellij.execution.configurations.{ModuleBasedConfiguration, RunConfigurationModule}
+import com.intellij.execution.configurations.ModuleBasedConfiguration
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.module.Module
-import com.intellij.ui.SortedComboBoxModel
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.{LayeredIcon, SimpleTextAttributes, SortedComboBoxModel}
+import com.intellij.util.ui.EmptyIcon
 import org.jetbrains.sbt.SbtBundle
-import org.jetbrains.sbt.project.SbtMigrateConfigurationsAction.ModuleHeuristicResult
+import org.jetbrains.sbt.project.MigrateConfigurationsDialogWrapper.{ConfigDisplayOptions, TableCellRendererWithLeftMargin, ModuleConfigurationExt}
+import org.jetbrains.sbt.project.SbtMigrateConfigurationsAction.{ModuleConfiguration, ModuleHeuristicResult}
 
 import java.awt.event.MouseEvent
 import java.util.Comparator
 import scala.jdk.CollectionConverters.IterableHasAsJava
 
-class MigrateConfigurationsDialogWrapper(modules: Seq[Module], configurationToModule: Map[ModuleBasedConfiguration[_, _], ModuleHeuristicResult]) extends DialogWrapper(true) {
+class MigrateConfigurationsDialogWrapper(modules: Seq[Module], configurationToModule: Map[ModuleConfiguration, ModuleHeuristicResult]) extends DialogWrapper(true) {
 
   private val jModules = modules.asJavaCollection
   private val defaultModulesComboBoxText = SbtBundle.message("sbt.migrate.configurations.dialog.wrapper.default")
@@ -28,6 +33,10 @@ class MigrateConfigurationsDialogWrapper(modules: Seq[Module], configurationToMo
   // allowing custom sorting in each cell to keep suggested modules on top.
   private val configToComboBoxCellEditor = configurationToModule.view.mapValues { heuristicResult =>
     createComboBoxCellEditor(heuristicResult.guesses)
+  }.toMap
+
+  private val configToDisplayOptions = configurationToModule.keys.map { config =>
+    config -> new ConfigDisplayOptions(isTemporary = config.isTemporary, isShared = config.isShared)
   }.toMap
 
   private def createComboBoxCellEditor(namesToKeepOnTop: Seq[String]): DefaultCellEditor = {
@@ -79,6 +88,8 @@ class MigrateConfigurationsDialogWrapper(modules: Seq[Module], configurationToMo
   locally {
     setTitle(SbtBundle.message("sbt.migrate.configurations.dialog.wrapper.title"))
     myTable.setModel(myTableModel)
+    myTable.setShowGrid(false)
+    myTable.setRowHeight(JBUIScale.scale(22))
     setModal(true)
     init()
   }
@@ -89,8 +100,14 @@ class MigrateConfigurationsDialogWrapper(modules: Seq[Module], configurationToMo
     setUpPreviousModuleNameColumn()
     setUpSelectingModulesColumn()
 
-    configurationToModule.foreach { case (config, ModuleHeuristicResult(module, _)) =>
-      val moduleName = config.getConfigurationModule.asInstanceOf[RunConfigurationModule].getModuleName
+    // Sort the configurations first alphabetically by type,
+    // and then by whether they are temporary, placing temporary configurations last.
+    val sorted = configurationToModule.toSeq.sortBy { case (config, _) =>
+      val configTypeName = config.getType.getDisplayName
+      (configTypeName, isTemporary(config))
+    }
+    sorted.foreach { case (config, ModuleHeuristicResult(module, _)) =>
+      val moduleName = config.getConfigurationModule.getModuleName
       val row: Array[AnyRef] = module match {
         case Some(module) => Array(config, moduleName, module)
         case _ => Array(config, moduleName)
@@ -122,34 +139,46 @@ class MigrateConfigurationsDialogWrapper(modules: Seq[Module], configurationToMo
   private def getValueAt[T](row: Integer, column: Integer): Option[T] =
     Option(myTableModel.getValueAt(row, column)).map(_.asInstanceOf[T])
 
-  private def setUpTableHeaderRenderer(): Unit = {
-    val font = myTable.getTableHeader.getFont
-    myTable.getTableHeader.setFont(font.deriveFont(font.getStyle | Font.BOLD))
-  }
+  private def setUpTableHeaderRenderer(): Unit =
+    myTable.getTableHeader.setDefaultRenderer(new TableCellRendererWithLeftMargin)
 
   private def setUpSelectingModulesColumn(): Unit = {
     val columnModel = myTable.getColumnModel.getColumn(2)
     columnModel.setCellRenderer(new ModuleComboBoxColumnCellRenderer(defaultModulesComboBoxText))
   }
 
+  private def isTemporary(config: ModuleConfiguration): Boolean =
+    configToDisplayOptions.get(config).exists(_.isTemporary)
+
+  private def isShared(config: ModuleConfiguration): Boolean =
+    configToDisplayOptions.get(config).exists(_.isShared)
+
   private def setUpConfigurationColumn(): Unit = {
     val columnModel = myTable.getColumnModel.getColumn(0)
-    columnModel.setCellRenderer(new DefaultTableCellRenderer() {
+    columnModel.setCellRenderer(new TableCellRendererWithLeftMargin {
       override def setValue(value: Any): Unit = {
         value match {
-          case x: ModuleBasedConfiguration[_, _] =>
-            setIcon(x.getType.getIcon)
-            setText(x.getName)
-          case _ =>
+          case config: ModuleConfiguration =>
+            // The logic of where to put the shared icon,
+            // and the gray foreground was taken from com.intellij.execution.impl.RunConfigurableTreeRenderer
+            val secondLayerIcon = if (isShared(config)) AllIcons.Nodes.Shared else EmptyIcon.ICON_16
+            setIcon(LayeredIcon.layeredIcon(Array(config.getType.getIcon, secondLayerIcon)))
+
+            setText(config.getName)
+
+            val fg = if (isTemporary(config)) SimpleTextAttributes.GRAY_ATTRIBUTES.getFgColor else null
+            setForeground(fg)
+          case _ => setForeground(null)
         }
       }
     })
   }
 
   private def setUpPreviousModuleNameColumn(): Unit = {
-    // note: it is needed because column name "Module name in previous scheme" is too long
+    // note: it is necessary because column name "Module name in previous scheme" is too long
     val columnModel = myTable.getColumnModel.getColumn(1)
     columnModel.setPreferredWidth(150)
+    columnModel.setCellRenderer(new TableCellRendererWithLeftMargin)
   }
 
   def open(): Map[ModuleBasedConfiguration[_, _], Module] = {
@@ -167,19 +196,48 @@ class MigrateConfigurationsDialogWrapper(modules: Seq[Module], configurationToMo
       .toMap
   }
 
-  private def createConfigModuleTuple(row: Int): (Option[ModuleBasedConfiguration[_, _]], Option[Module]) = {
-    val config = getValueAt[ModuleBasedConfiguration[_, _]](row, 0)
+  private def createConfigModuleTuple(row: Int): (Option[ModuleConfiguration], Option[Module]) = {
+    val config = getValueAt[ModuleConfiguration](row, 0)
     val module = getValueAt[Module](row, 2)
     (config, module)
   }
 
-  private def findConfigInRow(row: Integer): Option[ModuleBasedConfiguration[_, _]] = {
+  private def findConfigInRow(row: Integer): Option[ModuleConfiguration] = {
     val isRowWithinRange = row >= 0 && row < configurationToModule.size
-    if (isRowWithinRange) getValueAt[ModuleBasedConfiguration[_, _]](row, 0)
+    if (isRowWithinRange) getValueAt[ModuleConfiguration](row, 0)
     else None
   }
 }
 
+object MigrateConfigurationsDialogWrapper {
+
+  private class ConfigDisplayOptions(val isTemporary: Boolean, val isShared: Boolean)
+
+  implicit class ModuleConfigurationExt(config: ModuleConfiguration) {
+    def isShared: Boolean = getSettings.exists(_.isShared)
+
+    def isTemporary: Boolean = getSettings.exists(_.isTemporary)
+
+    private def getSettings: Option[RunnerAndConfigurationSettings] = {
+      val project = config.getProject
+      Option(RunManager.getInstance(project).findSettings(config))
+    }
+  }
+
+  /**
+   * Adding a left margin is necessary for the last column with the <code>ModulesComboBox</code>,
+   * so to maintain the table consistency it is added to all columns. <p>
+   * This is because when the cell containing the <code>ModulesComboBox</code> is active (the user clicks on it), the ModulesComboBox is responsible for displaying the cell's values,
+   * and it has a margin. Without adding a border, the value's position in the cell would shift depending on whether it is active or not.
+   */
+  class TableCellRendererWithLeftMargin extends DefaultTableCellRenderer {
+    override def getTableCellRendererComponent(table: JTable, value: Any, isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int): Component = {
+      val component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column)
+      setBorder(com.intellij.util.ui.JBUI.Borders.emptyLeft(12))
+      component
+    }
+  }
+}
 /**
  * A comparator for modules that prioritizes specified modules before
  * performing a case-insensitive alphabetical comparison based on their names.
