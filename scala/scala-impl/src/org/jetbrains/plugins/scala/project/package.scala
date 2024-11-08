@@ -417,6 +417,13 @@ package object project {
       modulesWithScala.exists(_.hasScala3)
     }
 
+    //TODO: currently this is an extension method on a project
+    // However, it should be an extension method on a file.
+    // This is because code style can be per-file (due to .editorconfig files)
+    // Also there is SCL-22380 which can alter the code-style behavior per-module
+    //
+    //TODO: in platform print a warning when code style is used on the in-memory, synthetic file OR alternative conditions - when it's outside source roots with editor config
+    // users should explicitly use code style of file.getProject or ensure that the file is physical or something like that
     def indentationBasedSyntaxEnabled(features: ScalaFeatures): Boolean =
       features.isScala3 &&
         features.indentationBasedSyntaxEnabled &&

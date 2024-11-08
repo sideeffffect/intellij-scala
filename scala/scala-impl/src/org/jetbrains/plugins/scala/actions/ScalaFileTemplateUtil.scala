@@ -1,12 +1,14 @@
 package org.jetbrains.plugins.scala.actions
 
-import com.intellij.application.options.CodeStyle
 import com.intellij.ide.fileTemplates.FileTemplate
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.psi.{PsiClass, PsiFile, PsiMethod}
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.psi.{PsiClass, PsiDirectory, PsiFile, PsiMethod}
 import org.jetbrains.plugins.scala.extensions._
-import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScOptionalBracesOwner
+import org.jetbrains.plugins.scala.project.{ModuleExt, ProjectExt, ScalaFeatures}
 
 import java.util.Properties
 
@@ -33,8 +35,26 @@ object ScalaFileTemplateUtil {
     properties.setProperty(FileTemplate.ATTRIBUTE_METHOD_NAME, methodName)
   }
 
-  def removeBracesIfIndentationBasedSyntaxIsEnabled(file: PsiFile): Unit = {
-    if (useIndentationBasedSyntax(file)) {
+  private[actions]
+  def getModuleForDir(project: Project, directory: PsiDirectory): Option[Module] =
+    Option(ProjectRootManager.getInstance(project).getFileIndex.getModuleForFile(directory.getVirtualFile))
+
+  private[actions]
+  def removeBracesIfIndentationBasedSyntaxIsEnabled(project: Project, targetDirectory: PsiDirectory, file: PsiFile): Unit = {
+    if (!file.isPhysical) {
+      //We need to attach scala features to the synthetic file in order the proper settings for indentation are used
+      //TODO: this s still enough. The created temporary file does not belong to the directory yet.
+      // So this won't work with overridden settings in .editorconfig (see comment in ProjectExt$#indentationBasedSyntaxEnabled)
+      // We might remove the braces on the added file.
+      // But ATM I couldn't make it work, the issue is that Undo action removes the braces and not the file removal
+      // I couldn't make this change transparent to "UnDo.
+      // `CommandProcessor.runUndoTransparentAction` doesn't seem to help for some reason
+      val features = ScalaFileTemplateUtil.getModuleForDir(project, targetDirectory).map(_.features).getOrElse(ScalaFeatures.default)
+      ScalaFeatures.setAttachedScalaFeatures(file, features)
+    }
+
+    val features = ScalaFeatures.forPsiOrDefault(file)
+    if (file.getProject.indentationBasedSyntaxEnabled(features)) {
       WriteCommandAction
         .writeCommandAction(file.getProject)
         .shouldRecordActionForActiveDocument(false)
@@ -44,12 +64,6 @@ object ScalaFileTemplateUtil {
           optionalBracesOwners.foreach(removeEmptyBraces)
         }
     }
-  }
-
-  private def useIndentationBasedSyntax(psiFile: PsiFile): Boolean = {
-    val codeStyleSettings = CodeStyle.getSettings(psiFile)
-    val scalaCodeStyleSettings = codeStyleSettings.getCustomSettings(classOf[ScalaCodeStyleSettings])
-    scalaCodeStyleSettings.USE_SCALA3_INDENTATION_BASED_SYNTAX
   }
 
   private def removeEmptyBraces(bracesOwner: ScOptionalBracesOwner): Unit = {
