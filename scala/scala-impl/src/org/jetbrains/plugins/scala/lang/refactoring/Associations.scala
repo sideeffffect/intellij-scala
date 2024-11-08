@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.scala.lang.refactoring
 
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.{Attachment, Logger}
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase
 import com.intellij.openapi.progress.{ProcessCanceledException, ProgressManager, StandardProgressIndicator}
@@ -7,7 +8,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.{Key, Segment, TextRange}
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.{PsiElement, PsiFile}
-import org.jetbrains.annotations.{Nullable, TestOnly}
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.dependency.{Dependency, DependencyPath}
 import org.jetbrains.plugins.scala.lang.psi.ScImportsHolder
@@ -51,15 +54,61 @@ final class Associations private(override val associations: Array[Association])
     }
   }
 
-  private def getBindingsForOffset(offset: Int)(implicit file: PsiFile): Seq[Binding] = {
-    val size = associations.length
-    @Nullable val indicator = ProgressManager.getInstance().getProgressIndicator
-    associations.zipWithIndex.toSeq.flatMap { case (association, index) =>
-      if (indicator ne null) {
-        indicator.checkCanceled()
-        val fraction = (index + 1).toDouble / size
-        indicator.setFraction(fraction)
+  private def getBindingsForOffset(offset: Int)
+                                  (implicit file: PsiFile): Seq[Binding] = for {
+    association <- associations.toSeq
+    reference <- referenceFor(association, offset)
+
+    path = association.path.asString()
+    if hasNonDefaultPackage(path)
+  } yield Binding(reference, path)
+
+  @RequiresEdt
+  private[scala] def restoreOnUiThread(segment: Segment)
+                                      (filter: Seq[Binding] => Seq[Binding])
+                                      (implicit project: Project, file: PsiFile): Unit = {
+
+    val bindings = {
+      var result: Seq[Binding] = Seq.empty
+      val title = ScalaBundle.message("processing.imports.title")
+      val performUnderProgress: java.util.function.Consumer[com.intellij.openapi.progress.ProgressIndicator] = { indicator =>
+        indicator.setIndeterminate(false)
+        indicator.setFraction(0)
+        result = getBindingsForOffsetUnderProgress(indicator)(segment.getStartOffset)
       }
+
+      //noinspection ApiStatus
+      ApplicationManagerEx.getApplicationEx.runWriteActionWithCancellableProgressInDispatchThread(
+        title, project, null, performUnderProgress)
+
+      result
+    }
+
+    val bindingsDistinct = bindings.distinct
+    val bindingsToRestore = filter(bindingsDistinct)
+
+    if (bindingsToRestore.nonEmpty) {
+      val references = bindingsToRestore.map(_.reference)
+      val importPaths = bindingsToRestore.map(b => ImportPath(b.path, b.aliasName))
+
+      val commonParent = PsiTreeUtil.findCommonParent(references.asJava)
+      if (commonParent != null) {
+        val importsHolder = ScImportsHolder(commonParent)(project)
+        inWriteAction {
+          importsHolder.addImportsForPaths(importPaths, commonParent)
+        }
+      }
+    }
+  }
+
+  private def getBindingsForOffsetUnderProgress(indicator: com.intellij.openapi.progress.ProgressIndicator)
+                                               (offset: Int)
+                                               (implicit file: PsiFile): Seq[Binding] = {
+    val size = associations.length
+    associations.zipWithIndex.toSeq.flatMap { case (association, index) =>
+      indicator.checkCanceled()
+      val fraction = (index + 1).toDouble / size
+      indicator.setFraction(fraction)
 
       val path = association.path.asString()
       if (hasNonDefaultPackage(path))
