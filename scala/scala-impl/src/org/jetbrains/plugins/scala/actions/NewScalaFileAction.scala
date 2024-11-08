@@ -10,7 +10,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx
 import com.intellij.openapi.module.{Module, ModuleType}
 import com.intellij.openapi.project.{DumbAware, Project}
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.InputValidatorEx
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi._
@@ -58,7 +57,7 @@ final class NewScalaFileAction extends CreateTemplateInPackageAction[ScalaPsiEle
       builder.addKind("Case Object", Icons.CASE_OBJECT, ScalaFileTemplateUtil.SCALA_CASE_OBJECT)
       builder.addKind("Trait", Icons.TRAIT, ScalaFileTemplateUtil.SCALA_TRAIT)
 
-      val module = Option(ProjectRootManager.getInstance(project).getFileIndex.getModuleForFile(directory.getVirtualFile))
+      val module = ScalaFileTemplateUtil.getModuleForDir(project, directory)
       val isInScala3Module = module.exists(_.hasScala3)
       //place enum at the very end of the list SCL-20749
       if (isInScala3Module) {
@@ -172,6 +171,8 @@ final class NewScalaFileAction extends CreateTemplateInPackageAction[ScalaPsiEle
 }
 
 object NewScalaFileAction {
+  val ID: String = "Scala.NewClass"
+
   @NonNls private[actions] val NAME_TEMPLATE_PROPERTY: String = "NAME"
   @NonNls private[actions] val LOW_CASE_NAME_TEMPLATE_PROPERTY: String = "lowCaseName"
 
@@ -209,7 +210,9 @@ object NewScalaFileAction {
     val factory: PsiFileFactory = PsiFileFactory.getInstance(project)
     val scalaFileType = ScalaFileType.INSTANCE
     val file: PsiFile = factory.createFileFromText(s"$name.${scalaFileType.getDefaultExtension}", scalaFileType, text)
-    ScalaFileTemplateUtil.removeBracesIfIndentationBasedSyntaxIsEnabled(file)
+
+    ScalaFileTemplateUtil.removeBracesIfIndentationBasedSyntaxIsEnabled(project, directory, file)
+
     CodeStyleManager.getInstance(project).reformat(file)
     directory.add(file).asInstanceOf[PsiFile]
   }
