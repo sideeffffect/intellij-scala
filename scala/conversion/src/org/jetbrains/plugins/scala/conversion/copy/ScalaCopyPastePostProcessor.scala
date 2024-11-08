@@ -52,7 +52,7 @@ class ScalaCopyPastePostProcessor extends SingularCopyPastePostProcessor[Associa
 
     PsiDocumentManager.getInstance(project).commitAllDocuments()
 
-    associations.restore(bounds) {
+    associations.restoreOnUiThread(bounds) {
       case bindings if setting == ASK =>
         val bindingsSorted = bindings.filterNot(_.path.isEmpty).sortBy(_.path)
         if (bindingsSorted.nonEmpty) {
