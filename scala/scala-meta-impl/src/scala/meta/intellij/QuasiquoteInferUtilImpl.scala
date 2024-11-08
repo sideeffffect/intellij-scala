@@ -13,14 +13,14 @@ import org.jetbrains.plugins.scala.lang.psi.types.nonvalue.Parameter
 import org.jetbrains.plugins.scala.lang.psi.types.result._
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
 import org.jetbrains.plugins.scala.project.ProjectContext
-import org.jetbrains.plugins.scala.scalaMeta.QuasiquoteInferUtil
+import org.jetbrains.plugins.scala.scalaMeta.QuasiquoteInferUtilApi
 
 import scala.annotation.{nowarn, switch}
 import scala.meta._
 import scala.meta.inputs.Input
 import scala.meta.parsers.Parsed
 
-class QuasiquoteInferUtilImpl extends QuasiquoteInferUtil {
+trait QuasiquoteInferUtilApiImpl extends QuasiquoteInferUtilApi {
 
   import scala.{meta => m}
 

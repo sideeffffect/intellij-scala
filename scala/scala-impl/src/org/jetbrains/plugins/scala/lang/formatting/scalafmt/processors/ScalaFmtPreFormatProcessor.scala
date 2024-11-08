@@ -39,6 +39,7 @@ import org.jetbrains.plugins.scala.lang.psi.impl.expr.ScBlockImpl
 import org.jetbrains.plugins.scala.lang.psi.{ScalaPsiUtil, TypeAdjuster}
 import org.jetbrains.plugins.scala.lang.scaladoc.psi.api.ScDocComment
 import org.jetbrains.plugins.scala.project.UserDataHolderExt
+import org.jetbrains.plugins.scala.scalaMeta.ScalaMetaParseException
 import org.jetbrains.plugins.scala.{ScalaBundle, ScalaFileType}
 import org.scalafmt.dynamic.exceptions.{PositionExceptionImpl, ReflectionException}
 import org.scalafmt.dynamic.{ScalafmtReflect, ScalafmtReflectConfig, ScalafmtVersion}
@@ -906,8 +907,8 @@ object ScalaFmtPreFormatProcessor {
         error.map(_.cause).foreach(throw _)
 
       error.map(_.cause) match {
-        case Some(cause: scala.meta.ParseException) =>
-          displayParseError(cause.getMessage, cause.pos.start)
+        case Some(ScalaMetaParseException(message, start)) =>
+          displayParseError(message, start)
         case Some(cause: PositionExceptionImpl) =>
           displayParseError(cause.shortMessage, cause.pos.start)
         case Some(cause) =>

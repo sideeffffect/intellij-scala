@@ -9,7 +9,7 @@ import org.jetbrains.plugins.scala.lang.psi.types.nonvalue.Parameter
 import org.jetbrains.plugins.scala.lang.psi.types.result.TypeResult
 import org.jetbrains.plugins.scala.lang.resolve.ScalaResolveResult
 
-trait QuasiquoteInferUtil {
+trait QuasiquoteInferUtilApi {
   def isMetaQQ(ref: ScReference): Boolean
   def isMetaQQ(fun: ScFunction): Boolean
   def getMetaQQExpectedTypes(srr: ScalaResolveResult, stringContextApplicationRef: ScReferenceExpression): Seq[Parameter]
@@ -17,15 +17,15 @@ trait QuasiquoteInferUtil {
   def getMetaQQPatternTypes(pat: ScInterpolationPatternImpl): Seq[String]
 }
 
-object QuasiquoteInferUtil extends QuasiquoteInferUtil {
-  private lazy val impl = ApplicationManager.getApplication.getService(classOf[QuasiquoteInferUtil])
-
-  override def isMetaQQ(ref: ScReference): Boolean = impl.isMetaQQ(ref)
-  override def isMetaQQ(fun: ScFunction): Boolean = impl.isMetaQQ(fun)
+object QuasiquoteInferUtil extends QuasiquoteInferUtilApi {
+  override def isMetaQQ(ref: ScReference): Boolean =
+    ScalaMetaApi.instance.isMetaQQ(ref)
+  override def isMetaQQ(fun: ScFunction): Boolean =
+    ScalaMetaApi.instance.isMetaQQ(fun)
   override def getMetaQQExpectedTypes(srr: ScalaResolveResult, stringContextApplicationRef: ScReferenceExpression): Seq[Parameter] =
-    impl.getMetaQQExpectedTypes(srr, stringContextApplicationRef)
+    ScalaMetaApi.instance.getMetaQQExpectedTypes(srr, stringContextApplicationRef)
   override def getMetaQQExprType(pat: ScInterpolatedStringLiteral): TypeResult =
-    impl.getMetaQQExprType(pat)
+    ScalaMetaApi.instance.getMetaQQExprType(pat)
   override def getMetaQQPatternTypes(pat: ScInterpolationPatternImpl): Seq[String] =
-    impl.getMetaQQPatternTypes(pat)
+    ScalaMetaApi.instance.getMetaQQPatternTypes(pat)
 }
