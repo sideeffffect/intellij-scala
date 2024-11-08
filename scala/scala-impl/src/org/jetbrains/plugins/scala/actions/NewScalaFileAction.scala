@@ -10,12 +10,11 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx
 import com.intellij.openapi.module.{Module, ModuleType}
 import com.intellij.openapi.project.{DumbAware, Project}
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.InputValidatorEx
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi._
 import com.intellij.psi.codeStyle.CodeStyleManager
-import org.jetbrains.annotations.{NonNls, Nullable}
+import org.jetbrains.annotations.{NonNls, Nullable, TestOnly}
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.plugins.scala.codeInspection.ScalaInspectionBundle
 import org.jetbrains.plugins.scala.icons.Icons
@@ -58,7 +57,7 @@ final class NewScalaFileAction extends CreateTemplateInPackageAction[ScalaPsiEle
       builder.addKind("Case Object", Icons.CASE_OBJECT, ScalaFileTemplateUtil.SCALA_CASE_OBJECT)
       builder.addKind("Trait", Icons.TRAIT, ScalaFileTemplateUtil.SCALA_TRAIT)
 
-      val module = Option(ProjectRootManager.getInstance(project).getFileIndex.getModuleForFile(directory.getVirtualFile))
+      val module = ScalaFileTemplateUtil.getModuleForDir(project, directory)
       val isInScala3Module = module.exists(_.hasScala3)
       //place enum at the very end of the list SCL-20749
       if (isInScala3Module) {
@@ -66,15 +65,7 @@ final class NewScalaFileAction extends CreateTemplateInPackageAction[ScalaPsiEle
       }
     }
 
-    // Add user-defined file templates for .scala extension
-    for {
-      template <- FileTemplateManager.getInstance(project).getAllTemplates
-
-      fileType = FileTypeManagerEx.getInstanceEx.getFileTypeByExtension(template.getExtension)
-      if fileType == ScalaFileType.INSTANCE && checkPackageExists(directory)
-
-      templateName = template.getName
-    } builder.addKind(templateName, fileType.getIcon, templateName)
+    addUserDefinedScalaFileTemplates(project, directory, builder)
 
     builder.setTitle(ScalaBundle.message("newclassorfile.menu.action.dialog.title"))
     builder.setValidator(new InputValidatorEx {
@@ -102,6 +93,17 @@ final class NewScalaFileAction extends CreateTemplateInPackageAction[ScalaPsiEle
         !StringUtil.isEmptyOrSpaces(inputString) && getErrorText(inputString) == null
       }
     })
+  }
+
+  private def addUserDefinedScalaFileTemplates(project: Project, directory: PsiDirectory, builder: CreateFileFromTemplateDialog.Builder): Unit = {
+    for {
+      template <- FileTemplateManager.getInstance(project).getAllTemplates
+
+      fileType = FileTypeManagerEx.getInstanceEx.getFileTypeByExtension(template.getExtension)
+      if fileType == ScalaFileType.INSTANCE && checkPackageExists(directory)
+
+      templateName = template.getName
+    } builder.addKind(templateName, fileType.getIcon, templateName)
   }
 
   @Nullable
@@ -136,7 +138,7 @@ final class NewScalaFileAction extends CreateTemplateInPackageAction[ScalaPsiEle
   }
 
   override def doCreate(directory: PsiDirectory, newName: String, templateName: String): ScalaPsiElement = {
-    createClassFromTemplate(directory, newName, templateName) match {
+    NewScalaFileAction.createFromTemplate(directory, newName, templateName) match {
       case scalaFile: ScalaFile =>
         scalaFile.typeDefinitions.headOption.getOrElse(scalaFile)
       case _ => null
@@ -163,19 +165,22 @@ final class NewScalaFileAction extends CreateTemplateInPackageAction[ScalaPsiEle
     }
   }
 
-  private def createClassFromTemplate(directory: PsiDirectory, className: String, templateName: String,
-                                      parameters: String*): PsiFile = {
-    NewScalaFileAction.createFromTemplate(directory, className, templateName, parameters: _*)
-  }
-
   override def checkPackageExists(directory: PsiDirectory): Boolean = JavaDirectoryService.getInstance.getPackage(directory) != null
 }
 
 object NewScalaFileAction {
+  val ID: String = "Scala.NewClass"
+
   @NonNls private[actions] val NAME_TEMPLATE_PROPERTY: String = "NAME"
   @NonNls private[actions] val LOW_CASE_NAME_TEMPLATE_PROPERTY: String = "lowCaseName"
 
-  def createFromTemplate(directory: PsiDirectory, name: String, templateName: String, parameters: String*): PsiFile = {
+  @TestOnly
+  def createFromTemplate(
+    directory: PsiDirectory,
+    name: String,
+    templateName: String,
+    parameters: String*
+  ): PsiFile = {
     val project = directory.getProject
     val template: FileTemplate = FileTemplateManager.getInstance(project).getInternalTemplate(templateName)
     val properties: Properties = new Properties(FileTemplateManager.getInstance(project).getDefaultProperties())
@@ -197,6 +202,7 @@ object NewScalaFileAction {
     try {
       text = template.getText(properties)
       //workaround for IDEA-295002 (can remove when it's fixed)
+      //TODO: delete it in Nightly or EAP, the issue is fixed in the platform
       if (text.contains('\r')) {
         text = StringUtil.convertLineSeparators(text)
       }
@@ -209,7 +215,9 @@ object NewScalaFileAction {
     val factory: PsiFileFactory = PsiFileFactory.getInstance(project)
     val scalaFileType = ScalaFileType.INSTANCE
     val file: PsiFile = factory.createFileFromText(s"$name.${scalaFileType.getDefaultExtension}", scalaFileType, text)
-    ScalaFileTemplateUtil.removeBracesIfIndentationBasedSyntaxIsEnabled(file)
+
+    ScalaFileTemplateUtil.removeBracesIfIndentationBasedSyntaxIsEnabled(project, directory, file)
+
     CodeStyleManager.getInstance(project).reformat(file)
     directory.add(file).asInstanceOf[PsiFile]
   }

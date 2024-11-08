@@ -69,7 +69,7 @@ class NewPackageObjectAction extends LazyFileTemplateAction(
     val properties = if (defaults != null) defaults.getDefaultProperties else null
     val dialog = new CreateFromTemplateDialog(project, directory, selectedTemplate, defaults, properties)
     val createdElement = dialog.create()
-    ScalaFileTemplateUtil.removeBracesIfIndentationBasedSyntaxIsEnabled(createdElement.getContainingFile)
+    ScalaFileTemplateUtil.removeBracesIfIndentationBasedSyntaxIsEnabled(project, directory, createdElement.getContainingFile)
     if (createdElement != null) {
       elementCreated(dialog, createdElement)
       Some(createdElement)
