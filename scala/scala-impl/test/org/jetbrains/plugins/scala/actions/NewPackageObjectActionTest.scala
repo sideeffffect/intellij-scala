@@ -2,7 +2,6 @@ package org.jetbrains.plugins.scala.actions
 
 import com.intellij.ide.IdeView
 import com.intellij.ide.fileTemplates.FileTemplateManager
-import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl
 import com.intellij.ide.util.EditorHelper
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.actionSystem.{ActionManager, ActionUiKind, AnActionEvent, LangDataKeys}
@@ -11,11 +10,10 @@ import com.intellij.psi.{PsiDirectory, PsiElement, PsiManager}
 import com.intellij.testFramework.UsefulTestCase.assertInstanceOf
 import org.jetbrains.annotations.{NotNull, Nullable}
 import org.jetbrains.plugins.scala.ScalaVersion
-import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.scala.extensions.{StringExt, inWriteCommandAction}
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 
-abstract class NewPackageObjectActionTestBase extends ScalaLightCodeInsightFixtureTestCase {
+abstract class NewPackageObjectActionTestBase extends ScalaFileTemplateTestBase {
 
   protected def doTest(directory: String, expectedText: String, withFileHeaderTemplate: Boolean = false): Unit = {
     val view = runAction(directory, withFileHeaderTemplate)
@@ -40,24 +38,6 @@ abstract class NewPackageObjectActionTestBase extends ScalaLightCodeInsightFixtu
     initFileHeaderTemplate(isEmpty = !withFileHeaderTemplate)
     inWriteCommandAction(action.actionPerformed(event))
     view
-  }
-
-  private def initFileHeaderTemplate(isEmpty: Boolean): Unit = {
-    val templateManager = FileTemplateManager.getInstance(getProject).asInstanceOf[FileTemplateManagerImpl]
-    val templateText =
-      if (isEmpty) ""
-      else
-        """
-          |/**
-          | * Created by ${USER} on ${DATE}.
-          | */
-          |""".stripMargin
-
-    templateManager.setDefaultFileIncludeTemplateTextTemporarilyForTest(
-      FileTemplateManager.FILE_HEADER_TEMPLATE_NAME,
-      templateText,
-      getTestRootDisposable
-    )
   }
 
   protected def fileHeader: String = {
