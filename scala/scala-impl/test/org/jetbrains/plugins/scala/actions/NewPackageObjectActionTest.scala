@@ -10,56 +10,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.{PsiDirectory, PsiElement, PsiManager}
 import com.intellij.testFramework.UsefulTestCase.assertInstanceOf
 import org.jetbrains.annotations.{NotNull, Nullable}
+import org.jetbrains.plugins.scala.ScalaVersion
 import org.jetbrains.plugins.scala.base.ScalaLightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.scala.extensions.{StringExt, inWriteCommandAction}
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
-import org.jetbrains.plugins.scala.util.runners.{MultipleScalaVersionsRunner, RunWithScalaVersions, TestScalaVersion}
-import org.junit.runner.RunWith
 
-@RunWith(classOf[MultipleScalaVersionsRunner])
-@RunWithScalaVersions(Array(
-  TestScalaVersion.Scala_2_13,
-  TestScalaVersion.Scala_3_Latest
-))
-final class NewPackageObjectActionTest extends ScalaLightCodeInsightFixtureTestCase {
-  def testCreatePackageObject(): Unit = doTest(
-    directory = "example",
-    expectedText =
-      s"""package object example$CARET
-         |""".stripMargin
-  )
+abstract class NewPackageObjectActionTestBase extends ScalaLightCodeInsightFixtureTestCase {
 
-  def testCreatePackageObjectWithFileHeader(): Unit = doTest(
-    directory = "example",
-    expectedText =
-      s"""
-         |$fileHeader
-         |package object example$CARET
-         |""".stripMargin,
-    withFileHeaderTemplate = true
-  )
-
-  def testCreatePackageObjectInNestedPackage(): Unit = doTest(
-    directory = "com/example",
-    expectedText =
-      s"""package com
-         |
-         |package object example$CARET
-         |""".stripMargin
-  )
-
-  def testCreatePackageObjectWithFileHeaderInNestedPackage(): Unit = doTest(
-    directory = "com/example",
-    expectedText =
-      s"""package com
-         |
-         |$fileHeader
-         |package object example$CARET
-         |""".stripMargin,
-    withFileHeaderTemplate = true
-  )
-
-  private def doTest(directory: String, expectedText: String, withFileHeaderTemplate: Boolean = false): Unit = {
+  protected def doTest(directory: String, expectedText: String, withFileHeaderTemplate: Boolean = false): Unit = {
     val view = runAction(directory, withFileHeaderTemplate)
     val selectedElement = view.getSelectedElement
 
@@ -102,12 +60,122 @@ final class NewPackageObjectActionTest extends ScalaLightCodeInsightFixtureTestC
     )
   }
 
-  private def fileHeader: String = {
+  protected def fileHeader: String = {
     val props = FileTemplateManager.getInstance(getProject).getDefaultProperties
     s"""/**
        | * Created by ${props.get("USER")} on ${props.get("DATE")}.
        | */""".stripMargin
   }
+}
+
+final class NewPackageObjectActionTest_Scala2 extends NewPackageObjectActionTestBase {
+  override protected def supportedIn(version: ScalaVersion): Boolean = version == ScalaVersion.Latest.Scala_2_13
+
+  def testCreatePackageObject(): Unit = doTest(
+    directory = "example",
+    expectedText =
+      s"""package object example$CARET {
+         |
+         |}
+         |""".stripMargin
+  )
+
+  def testCreatePackageObjectWithFileHeader(): Unit = doTest(
+    directory = "example",
+    expectedText =
+      s"""
+         |$fileHeader
+         |package object example$CARET {
+         |
+         |}
+         |""".stripMargin,
+    withFileHeaderTemplate = true
+  )
+
+  def testCreatePackageObjectInNestedPackage(): Unit = doTest(
+    directory = "com/example",
+    expectedText =
+      s"""package com
+         |
+         |package object example$CARET {
+         |
+         |}
+         |""".stripMargin
+  )
+
+  def testCreatePackageObjectWithFileHeaderInNestedPackage(): Unit = doTest(
+    directory = "com/example",
+    expectedText =
+      s"""package com
+         |
+         |$fileHeader
+         |package object example$CARET {
+         |
+         |}
+         |""".stripMargin,
+    withFileHeaderTemplate = true
+  )
+}
+
+final class NewPackageObjectActionTest_Scala3 extends NewPackageObjectActionTestBase {
+
+  override protected def supportedIn(version: ScalaVersion): Boolean = version.isScala3
+
+  override protected def setUp(): Unit = {
+    super.setUp()
+
+    getScalaCodeStyleSettings.USE_SCALA3_INDENTATION_BASED_SYNTAX = true
+  }
+
+  def testCreatePackageObject(): Unit = doTest(
+    directory = "example",
+    expectedText =
+      s"""package object example$CARET
+         |""".stripMargin
+  )
+
+  def testCreatePackageObject_WithoutUsingIndentationBasedSyntax(): Unit = {
+    getScalaCodeStyleSettings.USE_SCALA3_INDENTATION_BASED_SYNTAX = false
+
+    doTest(
+      directory = "example",
+      expectedText =
+        s"""package object example$CARET {
+           |
+           |}
+           |""".stripMargin
+    )
+  }
+
+  def testCreatePackageObjectWithFileHeader(): Unit = doTest(
+    directory = "example",
+    expectedText =
+      s"""
+         |$fileHeader
+         |package object example$CARET
+         |""".stripMargin,
+    withFileHeaderTemplate = true
+  )
+
+  def testCreatePackageObjectInNestedPackage(): Unit = doTest(
+    directory = "com/example",
+    expectedText =
+      s"""package com
+         |
+         |package object example$CARET
+         |""".stripMargin
+  )
+
+  def testCreatePackageObjectWithFileHeaderInNestedPackage(): Unit = doTest(
+    directory = "com/example",
+    expectedText =
+      s"""package com
+         |
+         |$fileHeader
+         |package object example$CARET
+         |""".stripMargin,
+    withFileHeaderTemplate = true
+  )
 }
 
 private final class TestIdeView(@Nullable private val dir: PsiDirectory) extends IdeView {
