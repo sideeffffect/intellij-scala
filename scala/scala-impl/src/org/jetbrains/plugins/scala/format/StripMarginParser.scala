@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.scala.format
 
 import org.jetbrains.plugins.scala.codeInspection.collections.MethodRepr
-import org.jetbrains.plugins.scala.extensions.Parent
+import org.jetbrains.plugins.scala.extensions.{BooleanExt, Parent}
 import org.jetbrains.plugins.scala.lang.psi.api.base.literals.{ScCharLiteral, ScStringLiteral}
 import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScExpression, ScInfixExpr, ScMethodCall, ScPostfixExpr, ScReferenceExpression}
 import org.jetbrains.plugins.scala.util.MultilineStringUtil
@@ -40,28 +40,30 @@ object WithStrippedMargin {
    *         1. parent expression containing the original string literal and stripMargin call
    *         2. margin character
    */
-  def unapply(literal: ScStringLiteral): Option[(ScExpression, Char)] = {
-    val literalParent = literal.getParent
-    literalParent match {
-      case StripMarginCall(reference: ScReferenceExpression, _, Seq()) => //detect `"""123""".stripMargin`
-        Some(reference, MultilineStringUtil.DefaultMarginChar)
-      case StripMarginCall(postfix: ScPostfixExpr, _, Seq()) => //detect `"""123""" stripMargin`
-        Some(postfix, MultilineStringUtil.DefaultMarginChar)
-      case StripMarginCall(infix: ScInfixExpr, _, Seq(ScCharLiteral(value))) => //detect `"""123""" stripMargin '#'`
-        Some(infix, value)
-      case Parent(StripMarginCall(mc: ScMethodCall, _, Seq(ScCharLiteral(value)))) => //detect `"""123""".stripMargin('#')`
-        Some(mc, value)
-      case _ =>
-        None
+  def unapply(literal: ScStringLiteral): Option[(ScExpression, Char)] =
+    literal.getParent match {
+      case StripMarginCall(call, `literal`, char) => Some(call -> char)
+      case _ => None
     }
-  }
 
   private[format] object StripMarginCall {
+    def unapply(expression: ScExpression): Option[(ScExpression, ScStringLiteral, Char)] = {
+      val (name, result) = expression match {
+        case mc@ScMethodCall(reference@ScReferenceExpression.withQualifier(lit: ScStringLiteral), Seq(ScCharLiteral(char))) =>
+          reference.refName -> (mc, lit, char)
+        case Parent(mc@ScMethodCall(reference@ScReferenceExpression.withQualifier(lit: ScStringLiteral), Seq(ScCharLiteral(char)))) =>
+          reference.refName -> (mc, lit, char)
+        case reference@ScReferenceExpression.withQualifier(lit: ScStringLiteral) =>
+          reference.refName -> (reference, lit , MultilineStringUtil.DefaultMarginChar)
+        case postfix@ScPostfixExpr(lit: ScStringLiteral, op) =>
+          op.refName -> (postfix, lit, MultilineStringUtil.DefaultMarginChar)
+        case infix@ScInfixExpr(lit: ScStringLiteral, op, ScCharLiteral(char)) =>
+          op.refName -> (infix, lit, char)
+        case _ =>
+          return None
+      }
 
-    def unapply(expression: ScExpression): Option[(ScExpression, ScStringLiteral, Seq[ScExpression])] = expression match {
-      case MethodRepr(itself, Some(literal: ScStringLiteral), Some(ref), args) if literal.isMultiLineString && ref.refName == "stripMargin" =>
-        Some((itself, literal, args))
-      case _ => None
+      (name == "stripMargin").option(result)
     }
   }
 }
