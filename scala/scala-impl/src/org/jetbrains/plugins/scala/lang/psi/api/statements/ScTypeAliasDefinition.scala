@@ -27,7 +27,10 @@ trait ScTypeAliasDefinition extends ScTypeAlias {
 
   override def lowerBound: TypeResult = aliasedType
 
-  override def upperBound: TypeResult = aliasedType
+  override def upperBound: TypeResult = upperTypeElement match {
+    case Some(te) => te.`type`()
+    case None => aliasedType
+  }
 
   def isExactAliasFor(cls: PsiClass): Boolean = {
     val isDefinedInObject = containingClass match {

@@ -173,7 +173,7 @@ class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ") {
     val modifiers = textOf(t.getModifierList)
     val name = t.name
     val tps = if (t.typeParameters.isEmpty) "" else t.typeParameters.map(textOf).mkString("[", ", ", "]")
-    val bounds = if (t.isDefinition) "" else textOfBoundsIn(t)
+    val bounds = textOfBoundsIn(t, withLower = !t.isDefinition, withUpper = !t.isDefinition || t.upperTypeElement.isDefined)
     val rhs = t match {
       case definition: ScTypeAliasDefinition => " = " + textOf(definition.aliasedType)
       case _ => ""
@@ -191,11 +191,15 @@ class ClassPrinter(isScala3: Boolean, extendsSeparator: String = " ") {
     (if (annotations.isEmpty) "" else annotations + " ") + variance + name + clauses + typeBounds + contextBound
   }
 
-  private def textOfBoundsIn(o: ScTypeBoundsOwner): String = {
-    val lb = textOf(o.lowerBound)
-    val ub = textOf(o.upperBound)
-    val lower = if (lb == "_root_.scala.Nothing") "" else " >: " + lb
-    val upper = if (ub == "_root_.scala.Any") "" else " <: " + ub
+  private def textOfBoundsIn(o: ScTypeBoundsOwner, withLower: Boolean = true, withUpper: Boolean = true): String = {
+    val lower = if (!withLower) "" else {
+      val lb = textOf(o.lowerBound)
+      if (lb == "_root_.scala.Nothing") "" else " >: " + lb
+    }
+    val upper = if (!withUpper) "" else {
+      val ub = textOf(o.upperBound)
+      if (ub == "_root_.scala.Any") "" else " <: " + ub
+    }
     lower + upper
   }
 

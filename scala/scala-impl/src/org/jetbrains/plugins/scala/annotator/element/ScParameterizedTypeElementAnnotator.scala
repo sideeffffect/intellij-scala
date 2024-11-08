@@ -9,6 +9,7 @@ import org.jetbrains.plugins.scala.annotator.{ScalaAnnotationHolder, TypeConstru
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.externalLibraries.kindProjector.KindProjectorUtil
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.{ScParameterizedTypeElement, ScSimpleTypeElement, ScTypeElement, ScTypeVariableTypeElement}
+import org.jetbrains.plugins.scala.lang.psi.api.statements.ScTypeAliasDefinition
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.ScTypeParam
 import org.jetbrains.plugins.scala.lang.psi.types.api.designator.ScProjectionType
 import org.jetbrains.plugins.scala.lang.psi.types.api.{ParameterizedType, TypeParameter}
@@ -183,6 +184,10 @@ object ScParameterizedTypeElementAnnotator extends ElementAnnotator[ScParameteri
     }
 
     if (!argTy.conforms(upper)) {
+      argTy match {
+        case ParameterizedType(ScProjectionType(_, _: ScTypeAliasDefinition), _) => return // TODO Workaround, fix testSCL22257
+        case _ =>
+      }
       holder
         .createErrorAnnotation(
           range,

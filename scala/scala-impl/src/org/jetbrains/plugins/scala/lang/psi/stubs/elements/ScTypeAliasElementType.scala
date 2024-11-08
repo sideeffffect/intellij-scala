@@ -65,7 +65,7 @@ abstract class ScTypeAliasElementType[Func <: ScTypeAlias](debugName: String)
     }.map {
       _.getText
     }
-    val upperBoundText = maybeDeclaration.flatMap {
+    val upperBoundText = maybeAlias.flatMap {
       _.upperTypeElement
     }.map {
       _.getText
