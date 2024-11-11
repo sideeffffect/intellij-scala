@@ -142,7 +142,7 @@ object ScalaBundleSorting {
       )
     ),
     ModuleWithBundleInfo(
-      rootPath = scalaImplDir,
+      rootPath = scalaModDir / "scala-meta-impl",
       bundleMessagesRelativePath = "ScalaMetaBundle.properties"
     ),
     ModuleWithBundleInfo(
