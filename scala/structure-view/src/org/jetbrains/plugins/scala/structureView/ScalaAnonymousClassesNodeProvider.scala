@@ -102,7 +102,7 @@ object ScalaAnonymousClassesNodeProvider {
 
     def process(element: PsiElement): Unit = {
       element match {
-        case d: ScNewTemplateDefinition if d.isAnonimous =>
+        case d: ScNewTemplateDefinition if d.isAnonymous =>
           result += d
         case _ =>
       }
