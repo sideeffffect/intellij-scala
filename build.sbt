@@ -375,6 +375,7 @@ lazy val scalaImpl: sbt.Project =
         Dependencies.intellijIdeMetricsBenchmark % Test,
         Dependencies.intellijIdeMetricsCollector % Test,
         Dependencies.intellijIdeUtilCommon % Test,
+        Dependencies.scalaMetaCore % Test,
       ),
       // for dependency version completion/inspections
       libraryDependencies += Dependencies.coursierApi,
@@ -393,7 +394,9 @@ lazy val scalaImpl: sbt.Project =
       )
     )
 
-
+/**
+ * Encapsulates scala.meta, so that we don't have to depend on in directly in scala-impl
+ */
 lazy val scalaMetaImpl: sbt.Project =
   newProject("scala-meta-impl", file("scala/scala-meta-impl"))
     .dependsOn(scalaImpl % "test->test;compile->compile")
