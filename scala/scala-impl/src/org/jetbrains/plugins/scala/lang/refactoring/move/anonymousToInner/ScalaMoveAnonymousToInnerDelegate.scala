@@ -17,7 +17,7 @@ class ScalaMoveAnonymousToInnerDelegate extends MoveHandlerDelegate {
   override def getActionName(elements: Array[PsiElement]): String = ScalaBundle.message("move.anonymousToInner.name")
 
   override def canMove(elements: Array[PsiElement], targetContainer: PsiElement, reference: PsiReference): Boolean =
-    findNewTemplateDefinition(elements(0), reference).exists(_.isAnonimous)
+    findNewTemplateDefinition(elements(0), reference).exists(_.isAnonymous)
 
   private def findNewTemplateDefinition(element: PsiElement, reference: PsiReference): Option[ScNewTemplateDefinition] = {
     val maybeElement = Option(reference).map(_.getElement).orElse(Option(element))

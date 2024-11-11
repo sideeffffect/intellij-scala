@@ -28,7 +28,7 @@ private object ScalaAnonymousClassNameHelper {
    */
   def getPresentationName(newDef: ScNewTemplateDefinition): Option[String] = {
     val upper = PsiTreeUtil.getParentOfType(newDef, classOf[ScTypeDefinition])
-    if (upper == null && newDef.isAnonimous)
+    if (upper == null && newDef.isAnonymous)
       return None
 
     var value = upper.getUserData(AnonymousClassName)
@@ -47,7 +47,7 @@ private object ScalaAnonymousClassNameHelper {
         private var anonymousClassNameIndex = 0
 
         override def visitNewTemplateDefinition(newDef: ScNewTemplateDefinition): Unit = {
-          if ((upper eq newDef) || !newDef.isAnonimous)
+          if ((upper eq newDef) || !newDef.isAnonymous)
             return
 
           anonymousClassNameIndex += 1
