@@ -1,7 +1,9 @@
 package org.jetbrains.plugins.scala.lang.psi.impl.base.types
 
 import com.intellij.lang.ASTNode
+import org.jetbrains.plugins.scala.extensions.PsiElementExt
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.{ScMatchTypeCases, ScMatchTypeElement, ScTypeElement}
+import org.jetbrains.plugins.scala.lang.psi.api.statements.ScTypeAliasDefinition
 import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementImpl
 import org.jetbrains.plugins.scala.lang.psi.types.ScMatchType
 import org.jetbrains.plugins.scala.lang.psi.types.result.{Failure, TypeResult}
@@ -28,7 +30,11 @@ class ScMatchTypeElementImpl(node: ASTNode)
         }
         case _ => return Failure("")
       }
-      Right(ScMatchType(scrutineeType, caseTypes))
+      val upperBound = scrutineeTypeElement.parent.flatMap(_.parent).flatMap {
+        case alias: ScTypeAliasDefinition => alias.upperBound.toOption
+        case _ => None
+      }
+      Right(ScMatchType(scrutineeType, caseTypes, upperBound))
     case _ => Failure("")
   }
 }

@@ -6,6 +6,6 @@ class ScalaLibraryTest extends TextToTextTestBase(
   Seq.empty,
   Seq("scala"), Set.empty, 91,
   Set(
-    "scala.Tuple", // Top-level type alias
+    "scala.Tuple", // _ in match types, SCL-23189
   )
 )

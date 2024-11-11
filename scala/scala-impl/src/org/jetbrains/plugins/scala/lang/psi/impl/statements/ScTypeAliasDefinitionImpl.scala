@@ -4,10 +4,13 @@ import com.intellij.ide.util.EditSourceUtil
 import com.intellij.lang.ASTNode
 import com.intellij.navigation.ItemPresentation
 import com.intellij.psi._
+import com.intellij.psi.tree.IElementType
+import com.intellij.psi.util.PsiTreeUtil.getNextSiblingOfType
 import org.jetbrains.plugins.scala.caches.{BlockModificationTracker, cachedInUserData}
 import org.jetbrains.plugins.scala.extensions.{ObjectExt, PsiElementExt, ifReadAllowed}
 import org.jetbrains.plugins.scala.icons.Icons
 import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
+import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes.tUPPER_BOUND
 import org.jetbrains.plugins.scala.lang.parser.ScalaElementType
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaElementVisitor
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.ScTypeElement
@@ -44,8 +47,17 @@ final class ScTypeAliasDefinitionImpl private(stub: ScTypeAliasStub, node: ASTNo
   override def isOpaqueIn(place: PsiElement): Boolean =
     isOpaque && (getContainingFile != place.getContainingFile || !place.parentsInFile.contains(getParent))
 
+  override def upperTypeElement: Option[ScTypeElement] =
+    byPsiOrStub(boundElement(tUPPER_BOUND))(_.upperBoundTypeElement)
+
+  private def boundElement(elementType: IElementType): Option[ScTypeElement] = {
+    findLastChildByTypeScala[PsiElement](elementType).flatMap { element =>
+      getNextSiblingOfType(element, classOf[ScTypeElement]).toOption
+    }
+  }
+
   override def aliasedTypeElement: Option[ScTypeElement] =
-    byPsiOrStub(findChild[ScTypeElement])(_.typeElement)
+    byPsiOrStub(findLastChild[ScTypeElement])(_.typeElement)
 
   override def navigate(requestFocus: Boolean): Unit = {
     val descriptor =  EditSourceUtil.getDescriptor(this)
