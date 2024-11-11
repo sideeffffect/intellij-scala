@@ -15,7 +15,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.{ScClass, ScCon
 import org.jetbrains.plugins.scala.lang.psi.uast.baseAdapters.{ScUAnchorOwner, ScUAnnotated, ScUElement}
 import org.jetbrains.plugins.scala.lang.psi.uast.converter.Scala2UastConverter._
 import org.jetbrains.plugins.scala.lang.psi.uast.internals.LazyUElement
-import org.jetbrains.plugins.scala.lang.psi.uast.psi.PsiClassAnonimousWrapper
+import org.jetbrains.plugins.scala.lang.psi.uast.psi.PsiClassAnonymousWrapper
 
 import java.{util => ju}
 import org.jetbrains.uast._
@@ -218,7 +218,7 @@ final class ScUAnonymousClass(
       .orNull
 }
 
-private final class ScTemplateToPsiAnonymousClassAdapter(scTemplate: ScNewTemplateDefinition) extends PsiClassAnonimousWrapper {
+private final class ScTemplateToPsiAnonymousClassAdapter(scTemplate: ScNewTemplateDefinition) extends PsiClassAnonymousWrapper {
   override protected def getDelegate: PsiClass = scTemplate
 
   override def getBaseClassReference: PsiJavaCodeReferenceElement =
