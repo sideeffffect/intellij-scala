@@ -18,10 +18,11 @@ import org.jetbrains.plugins.scala.project.ModuleExt
 import org.jetbrains.plugins.scala.project.settings.ScalaCompilerSettings
 import org.jetbrains.plugins.scala.util.ScalaPluginJars
 import org.jetbrains.plugins.scala.worksheet.WorksheetUtils
-import org.jetbrains.plugins.scala.worksheet.actions.WorksheetFileHook
+import org.jetbrains.plugins.scala.worksheet.actions.{WorksheetFileHook, WorksheetSyntheticModule}
 import org.jetbrains.plugins.scala.worksheet.bsp.BspWorksheetCompilerExtension
 import org.jetbrains.plugins.scala.worksheet.server.RemoteServerConnector._
 import org.jetbrains.plugins.scala.worksheet.settings.WorksheetFileSettings
+import org.jetbrains.sbt.SbtUtil
 
 import java.io._
 
@@ -149,8 +150,19 @@ final class RemoteServerConnector(
 
   private def outputDirs: Seq[File] = {
     val modules = ModuleRootManager.getInstance(module).getDependencies :+ module
-    val strings = modules.map(CompilerPaths.getModuleOutputPath(_, false))
-    strings.map(new File(_)).toSeq
+    val paths =
+      if (!SbtUtil.isBuiltWithSeparateModulesForProdTest(project)) modules.map(CompilerPaths.getModuleOutputPath(_, false))
+      else {
+        modules.map { module =>
+          val name = module match {
+            case s: WorksheetSyntheticModule => s.cpModule.getName
+            case m => m.getName
+          }
+          val isTest = name.endsWith(".test")
+          CompilerPaths.getModuleOutputPath(module, isTest)
+        }
+      }
+    paths.map(new File(_)).toSeq
   }
 
   override protected def assemblyRuntimeClasspath(): Seq[File] = {
