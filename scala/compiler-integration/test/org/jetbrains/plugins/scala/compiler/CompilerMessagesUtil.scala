@@ -3,7 +3,7 @@ package org.jetbrains.plugins.scala.compiler
 import com.intellij.openapi.compiler.{CompilerMessage, CompilerMessageCategory}
 import org.junit.Assert.{assertNotNull, assertTrue}
 
-private object CompilerMessagesUtil {
+object CompilerMessagesUtil {
 
   def assertNoErrorsOrWarnings(messages: Seq[CompilerMessage]): Unit = {
     val errorsAndWarnings = messages.filter { message =>
