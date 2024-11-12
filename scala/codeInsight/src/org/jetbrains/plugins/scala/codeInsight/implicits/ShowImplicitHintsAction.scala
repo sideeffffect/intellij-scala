@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.scala.codeInsight.implicits
 
 import com.intellij.openapi.actionSystem._
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.keymap.KeymapManager
-import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.plugins.scala.codeInsight.ScalaCodeInsightBundle
 import org.jetbrains.plugins.scala.components.RunOnceStartupActivity
 
@@ -32,7 +32,7 @@ private object ShowImplicitHintsAction {
 
   class ConfigureShortcuts extends RunOnceStartupActivity {
     override protected def doRunActivity(): Unit = {
-      if (SystemInfo.isLinux) { // Workaround for SCL-21346
+      if (!ClientSystemInfo.isWindows && !ClientSystemInfo.isMac) { // Workaround for SCL-21346
         val keymap = KeymapManager.getInstance.getActiveKeymap
         keymap.removeShortcut("ZoomInIdeAction", new KeyboardShortcut(KeyStroke.getKeyStroke("shift control alt EQUALS"), null))
         keymap.removeShortcut("ZoomOutIdeAction", new KeyboardShortcut(KeyStroke.getKeyStroke("shift control alt MINUS"), null))

@@ -2,6 +2,7 @@ package org.jetbrains.plugins.scala.testingSupport
 
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.testframework.AbstractTestProxy
+import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.plugins.scala.testingSupport.IntegrationTestConfigurationRunning.foldText
 import org.junit.Assert
 import org.junit.Assert.fail
@@ -61,7 +62,7 @@ trait IntegrationTestConfigurationRunning {
     // return code on Unix/Linux program is a single byte; it has a value between 0 and 255
     // -1 becomes 255, -2 becomes 254, etc...
     val expectedCodeFixed =
-    if (com.intellij.openapi.util.SystemInfo.isUnix)
+    if (SystemInfo.isUnix)
       expectedCode.toByte & 0xFF
     else
       expectedCode
