@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.scala.lang.transformation
 
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.profile.codeInspection.ui.table.ThreeStateCheckBoxRenderer
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.treeStructure.treetable.{ListTreeTableModel, TreeColumnInfo, TreeTable}
@@ -156,7 +156,7 @@ class SelectionDialog {
     }
   }
 
-  private def padding = if (SystemInfo.isMac) 10 else 0
+  private def padding = if (ClientSystemInfo.isMac) 10 else 0
 }
 
 private abstract class Node(@Nls name: String) extends DefaultMutableTreeTableNode(name) {

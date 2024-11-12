@@ -6,11 +6,11 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.{AnAction, AnActionEvent}
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.{EditorFactoryEvent, EditorFactoryListener}
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable.{getInstance => EditorSettingsExternalizable}
 import com.intellij.openapi.editor.impl.EditorComponentImpl
-import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.plugins.scala.codeInsight.hints.ScalaEditorFactoryListener._
 import org.jetbrains.plugins.scala.codeInsight.implicits.ImplicitHints
 import org.jetbrains.plugins.scala.settings.ScalaApplicationSettings.{getInstance => ScalaApplicationSettings}
@@ -143,10 +143,10 @@ class ScalaEditorFactoryListener extends EditorFactoryListener {
 
   private val editorMouseWheelListener = new MouseWheelListener {
     override def mouseWheelMoved(e: MouseWheelEvent): Unit = if (xRayMode) {
-      val isModifierKeyDown = if (SystemInfo.isMac) e.isMetaDown else e.isControlDown
+      val isModifierKeyDown = if (ClientSystemInfo.isMac) e.isMetaDown else e.isControlDown
       if (isModifierKeyDown) {
         e.consume()
-        val modifierKeyMask = if (SystemInfo.isMac) InputEvent.META_DOWN_MASK | InputEvent.BUTTON3_DOWN_MASK else InputEvent.CTRL_DOWN_MASK
+        val modifierKeyMask = if (ClientSystemInfo.isMac) InputEvent.META_DOWN_MASK | InputEvent.BUTTON3_DOWN_MASK else InputEvent.CTRL_DOWN_MASK
         val event = new MouseWheelEvent(e.getSource.asInstanceOf[Component],
           e.getID, e.getWhen, e.getModifiersEx & ~modifierKeyMask,
           e.getX, e.getY, e.getXOnScreen, e.getYOnScreen, e.getClickCount, e.isPopupTrigger,

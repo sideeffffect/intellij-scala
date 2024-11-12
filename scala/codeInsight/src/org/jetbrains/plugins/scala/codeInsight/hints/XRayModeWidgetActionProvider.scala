@@ -5,13 +5,14 @@ import com.intellij.ide.HelpTooltip
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.{ActionButtonWithText, ActionToolbarImpl}
 import com.intellij.openapi.actionSystem.{ActionUpdateThread, AnAction, AnActionEvent, CommonDataKeys, DefaultActionGroup, Presentation, Separator}
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.markup.InspectionWidgetActionProvider
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.util.{IconLoader, SystemInfo}
+import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.JBColor.{`lazy` => LazyJBColor}
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.{JBInsets, JBUI, UIUtil}
@@ -40,10 +41,10 @@ class XRayModeWidgetActionProvider extends InspectionWidgetActionProvider {
       override def createCustomComponent(presentation: Presentation, place: String): JComponent = new ActionButtonWithText(this, presentation, place, JBUI.size(18)) {
         addMouseListener(new MouseAdapter {
           override def mousePressed(e: MouseEvent): Unit = {
-            val isModifierKeyDown = if (SystemInfo.isMac) e.isMetaDown else e.isControlDown
+            val isModifierKeyDown = if (ClientSystemInfo.isMac) e.isMetaDown else e.isControlDown
             if (isModifierKeyDown) {
               e.consume()
-              val modifierKeyMask = if (SystemInfo.isMac) InputEvent.META_DOWN_MASK else InputEvent.CTRL_DOWN_MASK
+              val modifierKeyMask = if (ClientSystemInfo.isMac) InputEvent.META_DOWN_MASK else InputEvent.CTRL_DOWN_MASK
               val event = new MouseEvent(e.getSource.asInstanceOf[Component],
                 e.getID, e.getWhen, e.getModifiersEx & ~modifierKeyMask,
                 e.getX, e.getY, e.getXOnScreen, e.getYOnScreen, e.getClickCount, e.isPopupTrigger,
@@ -58,12 +59,12 @@ class XRayModeWidgetActionProvider extends InspectionWidgetActionProvider {
           Option(editor.getColorsScheme.getColor(IconTextForegroundKey)).orElse(Option(IconTextForegroundKey.getDefaultColor)).getOrElse(UIUtil.getInactiveTextColor)
         })
 
-        if (!SystemInfo.isWindows) {
+        if (!ClientSystemInfo.isWindows) {
           val font = getFont
           setFont(new FontUIResource(font.deriveFont(font.getStyle, font.getSize - JBUIScale.scale(2).toFloat)))
         }
 
-        if (SystemInfo.isMac) {
+        if (ClientSystemInfo.isMac) {
           addMouseListener(new MouseAdapter() {
             override def mouseClicked(e: MouseEvent): Unit = if (e.getButton == MouseEvent.BUTTON1 && e.isMetaDown) {
               click()
