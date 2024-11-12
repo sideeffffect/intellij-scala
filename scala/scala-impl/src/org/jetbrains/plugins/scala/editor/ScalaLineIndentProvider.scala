@@ -10,9 +10,13 @@ import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
 
 final class ScalaLineIndentProvider extends LineIndentProvider {
 
-  override def isSuitableFor(language: Language): Boolean = language != null && language.isKindOf(ScalaLanguage.INSTANCE)
+  override def isSuitableFor(language: Language): Boolean =
+    language != null && language.isKindOf(ScalaLanguage.INSTANCE)
 
   override def getLineIndent(project: Project, editor: Editor, language: Language, offset: Int): String = {
+    if (offset < 0 || editor.getDocument.getTextLength <= offset)
+      return null
+
     val editorEx = editor match {
       case e: EditorEx => e
       case _ => return null
