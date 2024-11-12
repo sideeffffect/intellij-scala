@@ -1,14 +1,9 @@
 package org.jetbrains.plugins.scala.editor.importOptimizer
 
-import org.scalastyle.ConfigurationChecker
-
-import java.util.regex.Pattern
-import scala.util.Try
-
 /**
  * compareImports and compareNames are copy-pasted from [[org.scalastyle.scalariform.ImportOrderChecker]]
  */
-object ScalastyleSettings {
+object ScalastyleImportsUtil {
   val importOrderChecker = "org.scalastyle.scalariform.ImportOrderChecker"
 
   /**
@@ -73,15 +68,5 @@ object ScalastyleSettings {
     }
   }
 
-  def groups(checker: ConfigurationChecker): Option[Seq[Pattern]] = {
-    Try {
-      checker.parameters("groups").split(",").toSeq.map { name =>
-        Pattern.compile(checker.parameters(s"group.$name"))
-      }
-    }.toOption
-  }
-
   val nameOrdering: Ordering[String] = Ordering.fromLessThan(compareNames(_, _, isImport = false) < 0)
 }
-
-case class ScalastyleSettings(scalastyleOrder: Boolean, groups: Option[Seq[Pattern]])

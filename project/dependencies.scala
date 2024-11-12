@@ -119,8 +119,9 @@ object Dependencies {
 
   val ivy2: ModuleID = "org.apache.ivy" % "ivy" % "2.5.2"
 
-  // Transitive dependency of scalastyle. The version is deliberately outdated, to keep compatibility with scalastyle.
+  // Transitive dependencies of scalastyle. The versions are deliberately outdated, to keep compatibility with scalastyle.
   val scalaParserCombinators: ModuleID = "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.2"
+  val scalaCollectionCompat: ModuleID = "org.scala-lang.modules" %% "scala-collection-compat" % "2.5.0"
   val scalastyle: ModuleID = "com.beautiful-scala" %% "scalastyle" % "1.5.1"
 
   // "io.get-coursier" % "interface" is a large jar (over 3 megabytes) that is packaged as a whole application.
@@ -200,6 +201,7 @@ object DependencyGroups {
     scalaLibrary,
     scalaReflect,
     scalaXml,
+    scalaParserCombinators,
     scalapbRuntime,
     sbtStructureCore,
     evoInflector,

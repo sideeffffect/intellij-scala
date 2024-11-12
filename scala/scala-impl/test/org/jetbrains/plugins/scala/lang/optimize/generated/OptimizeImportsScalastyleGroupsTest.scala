@@ -4,7 +4,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.scala.base.libraryLoaders.SmartJDKLoader
-import org.jetbrains.plugins.scala.editor.importOptimizer.ScalastyleSettings
+import org.jetbrains.plugins.scala.codeInspection.scalastyle.ScalastyleSettings
 import org.jetbrains.plugins.scala.lang.optimize.OptimizeImportsTestBase
 
 import java.util.regex.Pattern

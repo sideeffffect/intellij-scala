@@ -7,7 +7,7 @@ import org.junit.Assert.assertEquals
 
 class ImportTextCreatorTest extends TestCase {
   private val lexOrdering = Some(Ordering.String)
-  private val scalastyleOrdering = Some(ScalastyleSettings.nameOrdering)
+  private val scalastyleOrdering = Some(ScalastyleImportsUtil.nameOrdering)
   private val textCreator = new ImportTextCreator()
 
   private def getImportText(info: ImportInfo,

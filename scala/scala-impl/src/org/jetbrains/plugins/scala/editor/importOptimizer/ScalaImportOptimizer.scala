@@ -1319,7 +1319,7 @@ object ScalaImportOptimizer {
       val result = if (settings.scalastyleOrder) {
         val lText = textCreator.getScalastyleSortableText(lInfo)
         val rText = textCreator.getScalastyleSortableText(rInfo)
-        ScalastyleSettings.compareImports(lText, rText)
+        ScalastyleImportsUtil.compareImports(lText, rText)
       }
       else {
         val lText = textCreator.getImportText(lInfo, settings)

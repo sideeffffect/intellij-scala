@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.scala.editor.importOptimizer
 
 import com.intellij.psi.PsiFile
-import org.jetbrains.plugins.scala.codeInspection.scalastyle.Scalastyle
+import org.jetbrains.plugins.scala.codeInspection.scalastyle.{ScalastyleService, ScalastyleSettings}
 import org.jetbrains.plugins.scala.lang.formatting.settings.ScalaCodeStyleSettings
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile
 import org.jetbrains.plugins.scala.project.{ProjectPsiElementExt, ScalaFeatures}
@@ -84,10 +84,7 @@ object OptimizeImportSettings {
     val scalastyleSettings =
       if (codeStyleSettings.isSortAsScalastyle) {
         //TODO: this branch is not covered with tests
-        val scalastyleConfig = Scalastyle.configurationFor(file)
-        val scalastyleChecker = scalastyleConfig.flatMap(_.checks.find(_.className == ScalastyleSettings.importOrderChecker))
-        val groups = scalastyleChecker.filter(_.enabled).flatMap(ScalastyleSettings.groups)
-        ScalastyleSettings(scalastyleOrder = true, groups)
+        ScalastyleService.instance.settingsFor(file)
       }
       else ScalastyleSettings(scalastyleOrder = false, None)
 

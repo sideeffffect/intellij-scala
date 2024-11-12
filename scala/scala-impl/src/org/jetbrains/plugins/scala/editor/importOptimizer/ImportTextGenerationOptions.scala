@@ -19,7 +19,7 @@ object ImportTextGenerationOptions {
 
   def from(settings: OptimizeImportSettings): ImportTextGenerationOptions = {
     val ordering =
-      if (settings.scalastyleOrder) Some(ScalastyleSettings.nameOrdering)
+      if (settings.scalastyleOrder) Some(ScalastyleImportsUtil.nameOrdering)
       else if (settings.sortImports) Some(Ordering.String)
       else None
     ImportTextGenerationOptions(

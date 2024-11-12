@@ -71,7 +71,8 @@ lazy val scalaCommunity: sbt.Project =
       scalaLanguageUtils % "test->test;compile->compile",
       scalaLanguageUtilsRt % "test->test;compile->compile",
       pluginXml,
-      scalaCli % "test->test;compile->compile"
+      scalaCli % "test->test;compile->compile",
+      scalastyleIntegration
     )
     .settings(MainProjectSettings)
     .settings(
@@ -354,8 +355,7 @@ lazy val scalaImpl: sbt.Project =
       scalatestFinders,
       runners,
       testRunners,
-      packageSearchClient % "test->test;compile->compile",
-      scalastyleIntegration
+      packageSearchClient % "test->test;compile->compile"
     )
     .settings(
       ideExcludedDirectories := Seq(
@@ -387,10 +387,11 @@ lazy val scalaImpl: sbt.Project =
       packageLibraryMappings := Seq(
         // "com.thesamet.scalapb" %% "scalapb-runtime" % ".*" -> None,
         // "com.thesamet.scalapb" %% "lenses" % ".*"          -> None,
-        Dependencies.scalaXml                              -> Some("lib/scala-xml.jar"),
-        Dependencies.scalaReflect                          -> Some("lib/scala-reflect.jar"),
-        Dependencies.scalaLibrary                          -> None,
-        Dependencies.scala3Library                         -> None,
+        Dependencies.scalaXml               -> Some("lib/scala-xml.jar"),
+        Dependencies.scalaReflect           -> Some("lib/scala-reflect.jar"),
+        Dependencies.scalaParserCombinators -> Some("lib/scala-parser-combinators.jar"),
+        Dependencies.scalaLibrary           -> None,
+        Dependencies.scala3Library          -> None
       )
     )
 
@@ -780,10 +781,10 @@ lazy val mlCompletionIntegration =
     )
 
 lazy val scalastyleIntegration = newProject("scalastyle", file("scala/integration/scalastyle"))
-  .dependsOn(scalaApi)
+  .dependsOn(scalaImpl)
   .settings(
     libraryDependencies += Dependencies.scalastyle,
-    packageLibraryMappings += (Dependencies.scalaParserCombinators -> Some("lib/scala-parser-combinators.jar"))
+    packageLibraryMappings += (Dependencies.scalaCollectionCompat -> Some("lib/scala-collection-compat.jar"))
   )
 
 //Integration with:

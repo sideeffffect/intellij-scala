@@ -4,20 +4,29 @@ import com.intellij.codeInspection.{InspectionManager, LocalQuickFix, ProblemDes
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.{VirtualFile, VirtualFileManager}
 import com.intellij.psi.{PsiDocumentManager, PsiElement, PsiFile}
+import org.jetbrains.plugins.scala.editor.importOptimizer.ScalastyleImportsUtil
 import org.jetbrains.plugins.scala.extensions.implementation.iterator.DepthFirstIterator
-import org.scalastyle._
+import org.scalastyle.{ConfigurationChecker, Level, Message, ScalastyleChecker, ScalastyleConfiguration, SourceSpec, StyleError}
 
 import java.nio.file.Path
+import java.util.regex.Pattern
 import scala.collection.mutable
+import scala.util.Try
 
-object Scalastyle {
-
-  def checkFile(file: PsiFile, manager: InspectionManager): Array[ProblemDescriptor] = {
+private final class ScalastyleServiceImpl extends ScalastyleService {
+  override def checkFile(file: PsiFile, manager: InspectionManager): Array[ProblemDescriptor] = {
     val converter = MessageToProblemDescriptorConverter(file, manager)
     configurationFor(file)
       .map(checkWithScalastyle(file, _))
       .map(_.flatMap(converter.toProblemDescriptor).toArray)
       .getOrElse(Array.empty)
+  }
+
+  override def settingsFor(file: PsiFile): ScalastyleSettings = {
+    val config = configurationFor(file)
+    val checker = config.flatMap(_.checks.find(_.className == ScalastyleImportsUtil.importOrderChecker))
+    val groups = checker.filter(_.enabled).flatMap(groupPatterns)
+    ScalastyleSettings(scalastyleOrder = true, groups)
   }
 
   private type TimestampedScalastyleConfiguration = (Long, ScalastyleConfiguration)
@@ -32,7 +41,7 @@ object Scalastyle {
     Locations.findIn(dir, possibleFileNames).map(latest)
   }
 
-  def configurationFor(file: PsiFile): Option[ScalastyleConfiguration] = {
+  private def configurationFor(file: PsiFile): Option[ScalastyleConfiguration] = {
     val virtualFile = file.getVirtualFile
     if (virtualFile == null)
       return None
@@ -118,5 +127,13 @@ object Scalastyle {
   private def checkWithScalastyle(file: PsiFile, config: ScalastyleConfiguration): List[Message[SourceSpec]] = {
     val checker = new ScalastyleChecker[SourceSpec](None)
     checker.checkFiles(config, Seq(new SourceSpec(file.getName, file.getText)))
+  }
+
+  private def groupPatterns(checker: ConfigurationChecker): Option[Seq[Pattern]] = {
+    Try {
+      checker.parameters("groups").split(",").toSeq.map { name =>
+        Pattern.compile(checker.parameters(s"group.$name"))
+      }
+    }.toOption
   }
 }
