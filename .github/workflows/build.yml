@@ -19,10 +19,14 @@ jobs:
             17
       - uses: coursier/cache-action@v6
       - name: Compile and package
+        shell: bash
         run: sbt clean packageArtifact Test/compile
       - name: Run internationalization bundle tests
+        shell: bash
         run: sbt runJUnit5Tests
       - name: Run typechecker tests
+        shell: bash
         run: sbt runTypeInferenceTests
       - name: Run assorted tests
+        shell: bash
         run: sbt runFastTests
