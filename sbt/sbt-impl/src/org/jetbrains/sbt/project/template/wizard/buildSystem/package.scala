@@ -5,22 +5,20 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.wizard.{AbstractNewProjectWizardStep, NewProjectOnboardingTips, OnboardingTipsInstallationInfo}
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.keymap.KeymapTextContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.{VfsUtil, VirtualFile}
+import kotlin.jvm.functions.Function1
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.scala.actions.ShowTypeInfoAction
 import org.jetbrains.plugins.scala.extensions.{CharSeqExt, inWriteAction}
 
-import scala.jdk.CollectionConverters.MapHasAsJava
-import scala.jdk.CollectionConverters.ListHasAsScala
-import kotlin.jvm.functions.Function1
-import org.jetbrains.annotations.ApiStatus
-
 import java.lang.{Integer => JInt}
+import scala.jdk.CollectionConverters.{ListHasAsScala, MapHasAsJava}
 
 package object buildSystem {
   private[buildSystem] def setProjectOrModuleSdk(
@@ -189,12 +187,12 @@ package object buildSystem {
       // others
       "META"                      -> raw("META"),
       "CONTROL"                   -> raw("CONTROL"),
-      "COMMAND"                   -> raw(if (SystemInfo.isMac) "META" else "CONTROL"),
+      "COMMAND"                   -> raw(if (ClientSystemInfo.isMac) "META" else "CONTROL"),
       "ProductName"               -> ApplicationNamesInfo.getInstance.getFullProductName
     )
 
   private lazy val tipsContext = new KeymapTextContext {
-    override def isSimplifiedMacShortcuts: Boolean = SystemInfo.isMac
+    override def isSimplifiedMacShortcuts: Boolean = ClientSystemInfo.isMac
   }
 
   private lazy val unrenderedVariables =
@@ -211,7 +209,7 @@ package object buildSystem {
       // others
       "META"                      -> "Meta",
       "CONTROL"                   -> "Control",
-      "COMMAND"                   -> (if (SystemInfo.isMac) "Meta" else "Control"),
+      "COMMAND"                   -> (if (ClientSystemInfo.isMac) "Meta" else "Control"),
       "ProductName"               -> ApplicationNamesInfo.getInstance.getFullProductName
     )
 

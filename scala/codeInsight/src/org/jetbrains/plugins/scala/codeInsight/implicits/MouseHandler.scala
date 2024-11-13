@@ -1,11 +1,12 @@
 package org.jetbrains.plugins.scala.codeInsight.implicits
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.{Editor, EditorFactory}
 import com.intellij.openapi.editor.event._
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.{Disposer, Key, SystemInfo}
+import com.intellij.openapi.util.{Disposer, Key}
 import com.intellij.ui.AncestorListenerAdapter
 import com.intellij.util.SlowOperations
 import com.intellij.util.ui.UIUtil
@@ -49,7 +50,7 @@ private final class MouseHandler extends ProjectActivity {
 
         if (SwingUtilities.isLeftMouseButton(event)) {
           hyperlinkAt(editor, event.getPoint) match {
-            case Some((_, text)) if SystemInfo.isMac && event.isMetaDown || event.isControlDown =>
+            case Some((_, text)) if ClientSystemInfo.isMac && event.isMetaDown || event.isControlDown =>
               e.consume()
               deactivateActiveHyperlink(editor)
               navigateTo(text, editor.getProject)
@@ -102,7 +103,7 @@ private final class MouseHandler extends ProjectActivity {
   private def handleMouseMoved(e: EditorMouseEvent): Unit = {
     val textAtPoint = textAt(e.getEditor, e.getMouseEvent.getPoint)
 
-    if (SystemInfo.isMac && e.getMouseEvent.isMetaDown || e.getMouseEvent.isControlDown) {
+    if (ClientSystemInfo.isMac && e.getMouseEvent.isMetaDown || e.getMouseEvent.isControlDown) {
       textAtPoint match {
         case Some((inlay, text)) if text.navigatable.isDefined =>
           if (!activeHyperlink.contains((inlay, text))) {
@@ -228,7 +229,7 @@ private final class MouseHandler extends ProjectActivity {
   }
 
   private def deactivateActiveFolding(editor: Editor): Unit = {
-    activeFolding.foreach { case (inlay, text) =>
+    activeFolding.foreach { case _ =>
       editor.getContentComponent.setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR))
     }
     activeFolding = None
