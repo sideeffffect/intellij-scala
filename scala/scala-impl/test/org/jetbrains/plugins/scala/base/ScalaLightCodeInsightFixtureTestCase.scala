@@ -140,8 +140,7 @@ abstract class ScalaLightCodeInsightFixtureTestCase
   override protected def setUp(): Unit = {
     // initialize indexing mode before java test fixture in super.setUp()
     /** see also [[com.intellij.testFramework.fixtures.JavaIndexingModeCodeInsightTestFixture]] */
-    indexingMode = this.findIndexingModeAnnotation()
-      .fold(IndexingMode.SMART)(_.mode())
+    indexingMode = this.getIndexingModeConsideringDumbModeChecks
 
     super.setUp()
 

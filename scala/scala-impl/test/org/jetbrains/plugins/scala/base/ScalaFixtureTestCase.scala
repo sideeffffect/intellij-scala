@@ -60,8 +60,7 @@ abstract class ScalaFixtureTestCase extends CodeInsightFixtureTestCase[ModuleFix
   override def tuneFixture(moduleBuilder: ModuleFixtureBuilder[_]): Unit = {
     super.tuneFixture(moduleBuilder)
 
-    indexingMode = this.findIndexingModeAnnotation()
-      .fold(IndexingMode.SMART)(_.mode())
+    indexingMode = this.getIndexingModeConsideringDumbModeChecks
     myFixture = IndexingModeCodeInsightTestFixture.Companion.wrapFixture(myFixture, indexingMode)
   }
 
