@@ -19,8 +19,8 @@ jobs:
             17
       - uses: coursier/cache-action@v6
       - name: Compile and package
-        run: sbt -no-colors clean packageArtifact Test/compile
+        run: sbt clean packageArtifact Test/compile
       - name: Run typechecker tests
-        run: sbt -no-colors runTypeInferenceTests
+        run: sbt runTypeInferenceTests
       - name: Run assorted tests
-        run: sbt -no-colors runFastTests
+        run: sbt runFastTests
