@@ -15,7 +15,7 @@ object Versions {
   val zincVersion = "1.10.4"
 
   // ATTENTION: check the comment in `Common.newProjectWithKotlin` when updating this version
-  val intellijVersion = "251.4312"
+  val intellijVersion = "251.5280"
 
   def isNightlyIntellijVersion: Boolean = intellijVersion.count(_ == '.') == 1
 
@@ -50,14 +50,14 @@ object Versions {
   val scalaExpressionCompiler: String = "3.1.6"
 
   /**
-   * For `"org.languagetool" % "language-*"` dependencies
+   * For `"org.jetbrains.intellij.deps.languagetool" % "language-*"` dependencies
    *
    * This version should be the same as in `com.intellij.grazie.GraziePlugin.LanguageTool.version` (it's updated automatically by `UpdateVersions` script)
    * Note that in Grazie plugin they actually use custom language tool distributions (see com.intellij.grazie.GraziePlugin.LanguageTool.url)
    * However according to Peter Gromov it shouldn't be important for us and we can use maven dependencies.
    * Those custom distributions usually contain performance fixes and not the logic.
    */
-  val LanguageToolVersion = "6.4"
+  val LanguageToolVersion = "6.5.0.12"
 
   object Sbt {
     val binary_0_13 = "0.13"

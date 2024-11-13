@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.scala.lang.dfa.controlFlow.transform
 
 import com.intellij.codeInspection.dataFlow.java.JavaClassDef
-import com.intellij.codeInspection.dataFlow.java.inst.{BooleanBinaryInstruction, EnsureIndexInBoundsInstruction, JvmPushInstruction, NotInstruction, NumericBinaryInstruction, PrimitiveConversionInstruction, ThrowInstruction}
+import com.intellij.codeInspection.dataFlow.java.inst.{BooleanBinaryInstruction, EnsureIndexInBoundsInstruction, NotInstruction, NumericBinaryInstruction, PrimitiveConversionInstruction, ThrowInstruction}
 import com.intellij.codeInspection.dataFlow.jvm.TrapTracker
 import com.intellij.codeInspection.dataFlow.jvm.problems.IndexOutOfBoundsProblem
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow.{ControlFlowOffset, DeferredOffset, FixedOffset}
@@ -96,7 +96,7 @@ abstract class InstructionBuilder(factory: DfaValueFactory,
 
   def pushVariable(descriptor: ScalaDfaVariableDescriptor, expression: ScExpression): StackValue = {
     val dfaVariable = createVariable(descriptor)
-    addPushingInstruction(new JvmPushInstruction(dfaVariable, ScalaStatementAnchor(expression)))
+    addPushingInstruction(new PushInstruction(dfaVariable, ScalaStatementAnchor(expression)))
   }
 
   def pop(values: Seq[StackValue]): Unit = {

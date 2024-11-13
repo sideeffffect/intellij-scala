@@ -4,7 +4,9 @@ import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.grammar.LanguageToolChecker
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.grazie.spellcheck.GrazieCheckers
 import com.intellij.grazie.text.TextChecker
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.spellchecker.inspections.SpellCheckingInspection
 import com.intellij.testFramework.{ExtensionTestUtil, PlatformTestUtil}
@@ -14,6 +16,7 @@ import org.jetbrains.plugins.scala.util.TestUtils
 import java.io.File
 import scala.annotation.nowarn
 import scala.jdk.CollectionConverters.SetHasAsJava
+import scala.reflect.{ClassTag, classTag}
 
 /**
  * Implementation is inspired by `com.intellij.grazie.GrazieTestBase` from IntelliJ repo
@@ -65,6 +68,8 @@ abstract class GrazieScalaTestBase extends ScalaLightCodeInsightFixtureTestCase:
         /*version = */ state.getVersion,
       ): @nowarn("cat=deprecation")
 
+    service[GrazieCheckers].awaitConfiguration()
+
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
 
     val newExtensions = TextChecker.allCheckers.stream.map:
@@ -81,9 +86,11 @@ abstract class GrazieScalaTestBase extends ScalaLightCodeInsightFixtureTestCase:
 
   override def tearDown(): Unit =
     try
-      GrazieConfig.Companion.update { (state: GrazieConfig.State) =>
+      GrazieConfig.Companion.update { (_: GrazieConfig.State) =>
         new GrazieConfig.State()
       }
+
+      service[GrazieCheckers].awaitConfiguration()
     catch case e: Throwable =>
       addSuppressedException(e)
     finally
@@ -94,3 +101,7 @@ abstract class GrazieScalaTestBase extends ScalaLightCodeInsightFixtureTestCase:
     myFixture.configureByFile(fileName)
     myFixture.checkHighlighting(true, false, false)
 end GrazieScalaTestBase
+
+inline def service[T: ClassTag]: T =
+  ApplicationManager.getApplication
+    .getService(classTag[T].runtimeClass.asInstanceOf[Class[T]])

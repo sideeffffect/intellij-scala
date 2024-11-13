@@ -804,11 +804,12 @@ lazy val textAnalysis =
         "org.intellij.intelliLang".toPlugin //required for intelliLangIntegration
       ),
       //Language packs needed at runtime to run tests
+      resolvers += DependencyResolvers.IntelliJDependencies,
       libraryDependencies ++= Seq(
         //languagetool-core is available in the platform, exclude it to avoid some strange runtime errors in tests
-        ("org.languagetool" % "language-ru" % Versions.LanguageToolVersion % Runtime).exclude("org.languagetool", "languagetool-core"),
-        ("org.languagetool" % "language-de" % Versions.LanguageToolVersion % Runtime).exclude("org.languagetool", "languagetool-core"),
-        ("org.languagetool" % "language-it" % Versions.LanguageToolVersion % Runtime).exclude("org.languagetool", "languagetool-core"),
+        ("org.jetbrains.intellij.deps.languagetool" % "language-ru" % Versions.LanguageToolVersion % Runtime).exclude("org.jetbrains.intellij.deps.languagetool", "languagetool-core"),
+        ("org.jetbrains.intellij.deps.languagetool" % "language-de" % Versions.LanguageToolVersion % Runtime).exclude("org.jetbrains.intellij.deps.languagetool", "languagetool-core"),
+        ("org.jetbrains.intellij.deps.languagetool" % "language-it" % Versions.LanguageToolVersion % Runtime).exclude("org.jetbrains.intellij.deps.languagetool", "languagetool-core"),
       )
     )
 

@@ -18,6 +18,7 @@ import org.jetbrains.sbt.shell.action._
 
 import java.beans.{PropertyChangeEvent, PropertyChangeListener}
 import java.util.Collections
+import scala.annotation.nowarn
 import scala.collection.mutable
 
 final class SbtShellConsoleView private(project: Project, debugConnection: Option[RemoteConnection])
@@ -150,7 +151,7 @@ object SbtShellConsoleView {
         val focusComponent = cv.getConsoleEditor.getContentComponent
         focusManager.doWhenFocusSettlesDown { () =>
           focusManager.requestFocus(focusComponent, false)
-        }
+        }: @nowarn("cat=deprecation")
       }
     }
   }

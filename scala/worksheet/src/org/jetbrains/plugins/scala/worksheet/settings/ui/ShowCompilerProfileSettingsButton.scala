@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import org.jetbrains.plugins.scala.project.settings.{ScalaCompilerConfigurable, ScalaCompilerProfilesPanel}
 import org.jetbrains.plugins.scala.worksheet.WorksheetBundle
 
+import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 
 private final class ShowCompilerProfileSettingsButton(
@@ -45,7 +46,7 @@ private final class ShowCompilerProfileSettingsButton(
           case _ => false
         }
         compilerConf.map { conf =>
-          ShowSettingsUtilImpl.getDialog(project, groups.toList.asJava, conf)
+          ShowSettingsUtilImpl.getDialog(project, groups.toList.asJava, conf): @nowarn("cat=deprecation") // IJPL-715
         }
       }
       dialogOpt match {
