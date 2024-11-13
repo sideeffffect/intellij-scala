@@ -20,10 +20,10 @@ jobs:
       - uses: sbt/setup-sbt@v1
       - uses: coursier/cache-action@v6
       - name: Compile and package
-        run: sbt 'clean' 'packageArtifact' 'Test/compile'
+        run: sbt '; clean; packageArtifact; Test/compile;'
       - name: Run internationalization bundle tests
-        run: sbt 'runJUnit5Tests'
+        run: sbt '; runJUnit5Tests;'
       - name: Run typechecker tests
-        run: sbt 'runTypeInferenceTests'
+        run: sbt '; runTypeInferenceTests;'
       - name: Run assorted tests
-        run: sbt 'runFastTests'
+        run: sbt '; runFastTests;'
