@@ -8,6 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil.getContextOfType
 import com.intellij.psi.{PsiElement, PsiMember, PsiMethod}
 import com.intellij.ui.LayeredIcon
 import com.intellij.util.ProcessingContext
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.scala.NotImplementedError
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.completion.handlers.ScalaInsertHandler.AssignmentText
@@ -346,7 +347,7 @@ object SameSignatureCallParametersProvider {
     }
   }
 
-  private[this] def findArgumentsList(position: PsiElement) =
+  private[this] def findArgumentsList(@Nullable position: PsiElement) =
     getContextOfType(position, classOf[ScArgumentExprList])
 
   private[this] implicit class LookupElementBuilderExt(private val builder: LookupElementBuilder) extends AnyVal {
