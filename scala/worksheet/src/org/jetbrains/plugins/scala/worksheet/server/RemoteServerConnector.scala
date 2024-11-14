@@ -149,19 +149,19 @@ final class RemoteServerConnector(
   }
 
   private def outputDirs: Seq[File] = {
+    def moduleOutputPath(module: Module): String = {
+      val name = module match {
+        case s: WorksheetSyntheticModule => s.cpModule.getName
+        case m => m.getName
+      }
+      val isTest = name.endsWith(".test")
+      CompilerPaths.getModuleOutputPath(module, isTest)
+    }
+
     val modules = ModuleRootManager.getInstance(module).getDependencies :+ module
     val paths =
       if (!SbtUtil.isBuiltWithSeparateModulesForProdTest(project)) modules.map(CompilerPaths.getModuleOutputPath(_, false))
-      else {
-        modules.map { module =>
-          val name = module match {
-            case s: WorksheetSyntheticModule => s.cpModule.getName
-            case m => m.getName
-          }
-          val isTest = name.endsWith(".test")
-          CompilerPaths.getModuleOutputPath(module, isTest)
-        }
-      }
+      else modules.map(moduleOutputPath)
     paths.map(new File(_)).toSeq
   }
 
