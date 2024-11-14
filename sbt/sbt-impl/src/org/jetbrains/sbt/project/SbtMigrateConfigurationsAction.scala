@@ -3,7 +3,7 @@ package org.jetbrains.sbt.project
 import com.intellij.execution.RunManager
 import com.intellij.execution.application.ApplicationConfiguration
 import com.intellij.execution.configurations.{JavaRunConfigurationModule, ModuleBasedConfiguration, RunConfigurationModule}
-import com.intellij.openapi.actionSystem.{ActionUpdateThread, AnAction, AnActionEvent, DataKey}
+import com.intellij.openapi.actionSystem.{ActionUpdateThread, AnAction, AnActionEvent}
 import com.intellij.openapi.application.CoroutinesKt
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
@@ -21,7 +21,7 @@ import org.jetbrains.plugins.scala.lang.psi.stubs.index.ScalaIndexKeys.StubIndex
 import org.jetbrains.plugins.scala.project.ModuleExt
 import org.jetbrains.plugins.scala.util.SbtModuleType
 import org.jetbrains.sbt.{SbtBundle, SbtUtil}
-import org.jetbrains.sbt.project.SbtMigrateConfigurationsAction.{IsDowngradingFromSeparateMainTestModules, classPathProviderModules, getConfigurationToHeuristicResult, logger}
+import org.jetbrains.sbt.project.SbtMigrateConfigurationsAction.updateRunConfigurations
 import org.jetbrains.sbt.project.extensionPoints.ModuleBasedConfigurationDetailsExtractor
 
 import scala.jdk.CollectionConverters.ListHasAsScala
@@ -42,21 +42,10 @@ class SbtMigrateConfigurationsAction extends AnAction(
 
   override def actionPerformed(e: AnActionEvent): Unit = {
     val project = e.getProject
-    if (project == null || project.isDefault) return
-
-    val modules = classPathProviderModules(project)
-    val isDowngradingFromMainTestModules = Option(e.getData(IsDowngradingFromSeparateMainTestModules))
-    val configToHeuristicResult = getConfigurationToHeuristicResult(project, modules, isDowngradingFromMainTestModules)
-
-    if (configToHeuristicResult.isEmpty) {
-      Messages.showWarningDialog(project, SbtBundle.message("sbt.migrate.configurations.warning.message"), SbtBundle.message("sbt.migrate.configurations.warning.title"))
-    } else {
-      val dialogWrapper = new MigrateConfigurationsDialogWrapper(modules, configToHeuristicResult.toMap)
-      val changedConfigToModule = dialogWrapper.open()
-      changedConfigToModule.foreach { case (config, module) =>
-        config.setModule(module)
-        logger.info(s"In ${config.getName} configuration, the module was changed to ${module.getName}")
-      }
+    val areAllConfigurationsUpdated = updateRunConfigurations(project, isDowngradingFromMainTestModules = None)
+    // If all configurations have been updated, then remove notifications (as they are no longer relevant)
+    if (areAllConfigurationsUpdated) {
+      UpdateRunConfigurationsNotification.closeAllExistingSuggestions(project)
     }
   }
 }
@@ -64,14 +53,34 @@ class SbtMigrateConfigurationsAction extends AnAction(
 object SbtMigrateConfigurationsAction {
   val ID = "Scala.Sbt.MigrateConfigurations"
   private val logger: Logger = Logger.getInstance(classOf[SbtMigrateConfigurationsAction])
-  /**
-   * It's crucial for checking invalidity in [[org.jetbrains.sbt.project.SbtMigrateConfigurationsAction.isConfigurationInvalid]] and for finding
-   * the most suitable module based on the name stored in the configuration ([[org.jetbrains.sbt.project.SbtMigrateConfigurationsAction.isConfigurationCompatibleWithModuleName]]).<p>
-   * Without this information, if separate modules for prod/test are disabled, we don't know whether the user disabled this feature
-   * or if he just upgraded from the old grouping to the new grouping.
-   */
-  val IsDowngradingFromSeparateMainTestModules: DataKey[Boolean] = DataKey.create("isDowngradingFromSeparateMainTestModules")
   private val MAX_MODULES_THRESHOLD = 10
+
+  /**
+   * @param isDowngradingFromMainTestModules indicates whether there is a downgrade from main/test modules.
+   *                                         If false, then it might be an upgrade to main/test modules or simply a grouping scheme migration.
+   *                                         If it's <code>None</code>, the run configurations update is triggered by an explicit action.
+   *                                         Providing such information allows the heuristics to work more accurately.
+   * @return true if all configurations have been updated, or if there were no configurations to update.
+   */
+  def updateRunConfigurations(@Nullable project: Project, isDowngradingFromMainTestModules: Option[Boolean]): Boolean = {
+    if (project == null || project.isDefault) return true
+
+    val modules = classPathProviderModules(project)
+    val configToHeuristicResult = getConfigurationToHeuristicResult(project, modules, isDowngradingFromMainTestModules)
+
+    if (configToHeuristicResult.isEmpty) {
+      Messages.showWarningDialog(project, SbtBundle.message("sbt.migrate.configurations.warning.message"), SbtBundle.message("sbt.migrate.configurations.warning.title"))
+      true
+    } else {
+      val dialogWrapper = new MigrateConfigurationsDialogWrapper(modules, configToHeuristicResult.toMap)
+      val changedConfigToModule = dialogWrapper.open()
+      changedConfigToModule.foreach { case (config, module) =>
+        config.setModule(module)
+        logger.info(s"In ${config.getName} configuration, the module was changed to ${module.getName}")
+      }
+      changedConfigToModule.size == configToHeuristicResult.size
+    }
+  }
 
   type ModuleConfiguration = ModuleBasedConfiguration[_ <: RunConfigurationModule, _]
 

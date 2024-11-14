@@ -155,6 +155,9 @@
         <registryKey key="SBT.system.in.process" defaultValue="true" restartRequired="true"
                      description="Internal, do not change"/>
 
+        <registryKey key="sbt.configuration.update.suggestion" defaultValue="true" restartRequired="false"
+                     description="If enabled, the information to update configurations is displayed as a suggestion and remains in the tool window until all configurations have been migrated."/>
+
         <newProjectWizard.languageGenerator implementation="org.jetbrains.sbt.project.template.wizard.ScalaNewProjectWizard"/>
         <newProjectWizard.scala.buildSystem implementation="org.jetbrains.sbt.project.template.wizard.buildSystem.SbtScalaNewProjectWizard" />
         <newProjectWizard.scala.buildSystem implementation="org.jetbrains.sbt.project.template.wizard.buildSystem.IntelliJScalaNewProjectWizard" />
