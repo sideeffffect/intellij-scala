@@ -422,16 +422,13 @@ class ScalaPositionManager(val debugProcess: DebugProcess) extends PositionManag
         methodsToLambdas.get(currentMethod)
       }
 
-      def functionExprBody(element: PsiElement): PsiElement = element match {
-        case ScFunctionExpr(_, Some(body)) => body
-        case _ => element
-      }
-
       if (possiblePositions.size <= 1) {
-        possiblePositions.headOption
+        possiblePositions.headOption.filter { element =>
+          isLambda(element) && isIndyLambda(currentMethod)
+        }
       }
       else if (isIndyLambda(currentMethod)) {
-        findPsiElementForIndyLambda().map(functionExprBody)
+        findPsiElementForIndyLambda()
       }
       else if (isDefaultArg) {
         findDefaultArg(possiblePositions, defaultArgIndex)
@@ -447,7 +444,6 @@ class ScalaPositionManager(val debugProcess: DebugProcess) extends PositionManag
         val generatingPsiElem = findElementByReferenceType(location.declaringType())
         possiblePositions
           .find(p => generatingPsiElem.contains(findGeneratingClassOrMethodParent(p)))
-          .map(functionExprBody)
       }
     }
 

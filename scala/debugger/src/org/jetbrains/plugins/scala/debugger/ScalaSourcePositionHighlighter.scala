@@ -3,15 +3,10 @@ package org.jetbrains.plugins.scala.debugger
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.SourcePositionHighlighter
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.{PsiElement, PsiMethod}
+import com.intellij.psi.PsiElement
 import com.intellij.util.DocumentUtil
 import org.jetbrains.plugins.scala.ScalaLanguage
-import org.jetbrains.plugins.scala.extensions.PsiElementExt
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScFunctionExpr
-import org.jetbrains.plugins.scala.lang.psi.api.toplevel.ScEarlyDefinitions
-import org.jetbrains.plugins.scala.lang.psi.api.toplevel.templates.ScTemplateBody
-import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTypeDefinition
-import org.jetbrains.plugins.scala.util.AnonymousFunction
 
 class ScalaSourcePositionHighlighter extends SourcePositionHighlighter {
   override def getHighlightRange(sourcePosition: SourcePosition): TextRange = {
@@ -26,10 +21,12 @@ class ScalaSourcePositionHighlighter extends SourcePositionHighlighter {
 
       if (isWholeLine(lineRange, element)) return null
 
-      containingLambda(lineRange, element).map {
-        case f: ScFunctionExpr => f.result.getOrElse(f).getTextRange
-        case e => e.getTextRange
-      }.orNull
+      if (ScalaPositionManager.isLambda(element)) {
+        element match {
+          case f: ScFunctionExpr => f.result.getOrElse(f).getTextRange
+          case e => e.getTextRange
+        }
+      } else null
     }
     else null
   }
@@ -39,16 +36,4 @@ class ScalaSourcePositionHighlighter extends SourcePositionHighlighter {
 
   private def isWholeLine(lineRange: TextRange, element: PsiElement): Boolean =
     lineRange == element.getTextRange
-
-  private def isContainedOnLine(lineRange: TextRange)(element: PsiElement): Boolean =
-    lineRange.contains(element.getTextRange)
-
-  private def containingLambda(lineRange: TextRange, element: PsiElement): Option[PsiElement] =
-    element.withParentsInFile.takeWhile(isContainedOnLine(lineRange)).collectFirst {
-      case e if AnonymousFunction.isGenerateAnonfun211(e) => Some(e)
-      case _: PsiMethod => None
-      case _: ScTemplateBody => None
-      case _: ScEarlyDefinitions => None
-      case _: ScTypeDefinition => None
-    }.flatten.filterNot(ScalaPositionManager.isInsideMacro)
 }
