@@ -908,6 +908,16 @@ lazy val runtimeDependencies = project.in(file("target/tools/runtime-dependencie
 ////////////////////////////////////////////
 import Common.TestCategory.*
 
+def runInputTask(key: InputKey[?], input: String, inState: State, resultState: State): State = {
+  val extracted = Project.extract(inState)
+  try {
+    extracted.runInputTask(key, input, inState)
+    resultState
+  } catch {
+    case _: Exception => resultState.fail
+  }
+}
+
 lazy val runTestCategory = Command.single("runTestCategory") { (state, category) =>
   val state1 = Command.process(
     s"""set Seq(
@@ -917,7 +927,7 @@ lazy val runTestCategory = Command.single("runTestCategory") { (state, category)
     state,
     _ => ()
   )
-  Command.process("testOnly", state1, _ => ())
+  runInputTask(Test / testOnly, "", state1, state)
   state
 }
 
@@ -947,8 +957,7 @@ lazy val runFlakyTests = Command.command("runFlakyTests") { state =>
     state,
     _ => ()
   )
-  Command.process("testOnly", state1, _ => ())
-  state
+  runInputTask(Test / testOnly, "", state1, state)
 }
 
 //it's run during "Package" step on TC
@@ -980,8 +989,7 @@ lazy val runFastTestsCommand = Command.single("runFastTestsCommand") { (state, g
     state,
     _ => ()
   )
-  Command.process(s"testOnly $glob", state1, _ => ())
-  state
+  runInputTask(Test / testOnly, s" $glob", state1, state)
 }
 
 addCommandAlias("runFastTests", "runFastTestsCommand *")
@@ -1000,8 +1008,7 @@ lazy val runJUnit5Tests = Command.command("runJUnit5Tests") { state =>
     state,
     _ => ()
   )
-  Command.process("test", state1, _ => ())
-  state
+  runInputTask(Test / testOnly, "", state1, state)
 }
 
 Global / commands ++= Seq(runTestCategory, runFlakyTests, runFastTestsCommand, runJUnit5Tests)
