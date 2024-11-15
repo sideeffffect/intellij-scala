@@ -10,7 +10,7 @@ import com.intellij.psi.{PsiElement, PsiFile, PsiFileFactory}
 import org.jetbrains.plugins.scala.debugger.DebuggerBundle
 import org.jetbrains.plugins.scala.debugger.evaluation.{EvaluationException, EvaluatorCompileHelper, ScalaEvaluatorCompileHelper}
 import org.jetbrains.plugins.scala.extensions._
-import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScBlock, ScBlockStatement, ScNewTemplateDefinition}
+import org.jetbrains.plugins.scala.lang.psi.api.expr.{ScBlock, ScBlockStatement, ScFunctionExpr, ScNewTemplateDefinition}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunctionDefinition
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.templates.ScTemplateBody
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScClass
@@ -50,8 +50,13 @@ private[evaluator] object GeneratedClass {
   var counter = 0
   val generatedMethodName: String = "invoke"
 
-  def apply(fragment: ScalaCodeFragment, context: PsiElement): GeneratedClass = {
+  def apply(fragment: ScalaCodeFragment, contextElement: PsiElement): GeneratedClass = {
     counter += 1
+
+    val context = contextElement match {
+      case f: ScFunctionExpr => f.result.getOrElse(f)
+      case e => e
+    }
 
     val generatedClassName = "GeneratedEvaluatorClass$" + counter
     val file = context.getContainingFile
