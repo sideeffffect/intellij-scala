@@ -17,7 +17,7 @@ import com.intellij.xdebugger.{XDebuggerUtil, XSourcePosition}
 import org.jetbrains.annotations.{Nls, NotNull, Nullable}
 import org.jetbrains.concurrency.{AsyncPromise, Promise}
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties
-import org.jetbrains.plugins.scala.debugger.{DebuggerBundle, ScalaPositionManager}
+import org.jetbrains.plugins.scala.debugger.{DebuggerBundle, ScalaPositionManager, ScalaSourcePositionWithWholeLineHighlighted}
 import org.jetbrains.plugins.scala.debugger.evaluation.util.DebuggerUtil
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes
@@ -129,6 +129,7 @@ class ScalaLineBreakpointType extends JavaLineBreakpointType("scala-line", Debug
       case c: ScClass => c
     }.find(!lambdas.contains(_))
 
+  //noinspection InstanceOf
   override def matchesPosition(@NotNull breakpoint: LineBreakpoint[_], @NotNull position: SourcePosition): Boolean = {
     val method = getContainingMethod(breakpoint)
     if (method == null) return false
@@ -137,13 +138,12 @@ class ScalaLineBreakpointType extends JavaLineBreakpointType("scala-line", Debug
 
     val element = position.getElementAt
     if (element eq null) return false
-    val isElementLambda = ScalaPositionManager.isLambda(element)
-
     if (isLambda(breakpoint)) {
       ScalaDebuggerUsagesCollector.logLambdaBreakpoint(breakpoint.getProject)
-      isElementLambda && element.getTextRange == method.getTextRange
+      ScalaPositionManager.isLambda(element) && element.getTextRange == method.getTextRange
     } else {
-      !isElementLambda
+      position.isInstanceOf[ScalaSourcePositionWithWholeLineHighlighted] &&
+        position.getLine == element.getLineNumber
     }
   }
 

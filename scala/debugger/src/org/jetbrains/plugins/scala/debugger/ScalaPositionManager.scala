@@ -404,7 +404,7 @@ class ScalaPositionManager(val debugProcess: DebugProcess) extends PositionManag
       }
     }
 
-    def calcElement(): Option[PsiElement] = {
+    def calcElement(): Option[(PsiElement, Boolean)] = {
       val possiblePositions = positionsOnLine(file, lineNumber)
       val currentMethod = location.method()
 
@@ -423,31 +423,38 @@ class ScalaPositionManager(val debugProcess: DebugProcess) extends PositionManag
       }
 
       if (possiblePositions.size <= 1) {
-        possiblePositions.headOption.filter { element =>
-          isLambda(element) && isIndyLambda(currentMethod)
+        possiblePositions.headOption.map { element =>
+          val wholeLineLambda = isLambda(element) && isIndyLambda(currentMethod)
+          val highlightWholeLine = !wholeLineLambda
+          (element, highlightWholeLine)
         }
       }
       else if (isIndyLambda(currentMethod)) {
-        findPsiElementForIndyLambda()
+        findPsiElementForIndyLambda().map((_, false))
       }
       else if (isDefaultArg) {
-        findDefaultArg(possiblePositions, defaultArgIndex)
+        findDefaultArg(possiblePositions, defaultArgIndex).map((_, false))
       }
       else if (!isAnonfun(currentMethod)) {
         possiblePositions.find {
           case e: PsiElement if isLambda(e) => false
           case (_: ScExpression) childOf (_: ScParameter) => false
           case _ => true
-        }
+        }.map((_, false))
       }
       else {
         val generatingPsiElem = findElementByReferenceType(location.declaringType())
         possiblePositions
           .find(p => generatingPsiElem.contains(findGeneratingClassOrMethodParent(p)))
+          .map((_, false))
       }
     }
 
-    calcElement().filter(_.isValid).map(SourcePosition.createFromElement)
+    calcElement().filter(_._1.isValid).map { case (element, highlightWholeLine) =>
+      val position = SourcePosition.createFromElement(element)
+      if (highlightWholeLine) new ScalaSourcePositionWithWholeLineHighlighted(position)
+      else position
+    }
   }
 
   @Nullable
