@@ -4,6 +4,7 @@ import com.intellij.codeInspection._
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.psi.{PsiElement, PsiElementVisitor}
 import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.scala.EditorArea.isVisible
 import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.codeInspection.ScalaInspectionBundle
 import org.jetbrains.plugins.scala.codeInspection.scaladoc.ScalaDocUnknownParameterInspection._
@@ -22,6 +23,8 @@ class ScalaDocUnknownParameterInspection extends LocalInspectionTool {
   override def buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = {
     new ScalaElementVisitor {
       override def visitDocComment(docComment: ScDocComment): Unit = {
+        if (!isVisible(docComment)) return
+
         ProgressIndicatorProvider.checkCanceled()
         checkDocComment(docComment, holder, isOnTheFly)
       }

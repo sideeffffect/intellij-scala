@@ -3,6 +3,7 @@ package org.jetbrains.plugins.scala.codeInspection.xml
 import com.intellij.codeInspection.{LocalInspectionTool, LocalQuickFix, ProblemsHolder}
 import com.intellij.openapi.project.{DumbAware, Project}
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.plugins.scala.EditorArea.isVisible
 import org.jetbrains.plugins.scala.ScalaBundle
 import org.jetbrains.plugins.scala.codeInspection.AbstractFixOnPsiElement
 import org.jetbrains.plugins.scala.lang.parser.ScalaElementType
@@ -16,6 +17,8 @@ final class ScalaXmlUnmatchedTagInspection extends LocalInspectionTool with Dumb
   override def buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = {
     new ScalaElementVisitor {
       override def visitXmlStartTag(s: ScXmlStartTag): Unit = {
+        if (!isVisible(s)) return
+
         if (s.getTextRange.isEmpty) return
 
         def register(fixes: LocalQuickFix*): Unit =
@@ -30,6 +33,8 @@ final class ScalaXmlUnmatchedTagInspection extends LocalInspectionTool with Dumb
       }
 
       override def visitXmlEndTag(s: ScXmlEndTag): Unit = {
+        if (!isVisible(s)) return
+
         def register(fixes: LocalQuickFix*): Unit =
           holder.registerProblem(s, ScalaBundle.message("xml.no.opening.tag"), fixes: _*)
 

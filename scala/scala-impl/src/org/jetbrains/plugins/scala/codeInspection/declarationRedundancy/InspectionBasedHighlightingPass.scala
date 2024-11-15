@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Iconable
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi._
 import com.intellij.psi.impl.source.resolve.FileContextUtil
+import org.jetbrains.plugins.scala.EditorArea.isVisible
 import org.jetbrains.plugins.scala.codeInspection.declarationRedundancy.InspectionBasedHighlightingPass.LocalQuickFixAsIntentionIconableAdapter
 import org.jetbrains.plugins.scala.codeInspection.suppression.ScalaInspectionSuppressor
 import org.jetbrains.plugins.scala.extensions.{ObjectExt, PsiElementExt}
@@ -52,6 +53,8 @@ abstract class InspectionBasedHighlightingPass(file: ScalaFile, document: Option
   private def profile: InspectionProfileImpl = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile
 
   def isEnabled(element: PsiElement): Boolean = {
+    if (!isVisible(element)) return false
+
     profile.isToolEnabled(highlightKey, element) && !inspectionSuppressor.isSuppressedFor(element, inspection.getShortName)
   }
 

@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.scala.lang.dfa.analysis
 
+import org.jetbrains.plugins.scala.EditorArea.isVisible
 import org.jetbrains.plugins.scala.lang.dfa.analysis.framework._
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaElementVisitor
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunctionDefinition
@@ -11,6 +12,8 @@ import scala.util.Success
 
 class ScalaDfaVisitor(val run: ScFunctionDefinition => Unit) extends ScalaElementVisitor {
   override def visitFunctionDefinition(function: ScFunctionDefinition): Unit = {
+    if (!isVisible(function)) return
+
     run(function)
   }
 }

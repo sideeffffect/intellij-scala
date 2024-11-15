@@ -158,6 +158,12 @@
         <autoImportOptionsProvider instance="org.jetbrains.plugins.scala.editor.autoimport.ScalaAutoImportOptionsProvider"/>
         <fileType name="Scala" language="Scala" extensions="scala;mill"
                   implementationClass="org.jetbrains.plugins.scala.ScalaFileType" fieldName="INSTANCE" />
+
+        <editorFactoryListener implementation="org.jetbrains.plugins.scala.EditorArea"/>
+        <registryKey key="scala.native.highlighting" defaultValue="true" restartRequired="false" description="Enable built-in highlighting"/>
+        <registryKey key="scala.incremental.highlighting" defaultValue="false" restartRequired="false" description="Highlight only visible code"/>
+        <registryKey key="scala.incremental.highlighting.lookaround" defaultValue="10" restartRequired="false" description="Number of lines to highlight beyond the visible area"/>
+
         <editorHighlighterProvider filetype="Scala"
                                    implementationClass="org.jetbrains.plugins.scala.highlighter.ScalaEditorHighlighterProvider"/>
 
