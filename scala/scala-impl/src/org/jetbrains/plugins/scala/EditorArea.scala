@@ -54,7 +54,10 @@ object EditorArea {
 
     if (!isIncrementalHighlightingEnabled) return true
 
-    val document = PsiDocumentManager.getInstance(e.getProject).getDocument(e.getContainingFile)
+    val psiFile = e.getContainingFile
+    if (psiFile == null) return false
+
+    val document = PsiDocumentManager.getInstance(e.getProject).getDocument(psiFile)
     if (document == null) return false
 
     val editors = EditorFactory.getInstance.getEditors(document)
