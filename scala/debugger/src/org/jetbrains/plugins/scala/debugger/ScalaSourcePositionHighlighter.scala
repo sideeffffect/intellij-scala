@@ -4,7 +4,7 @@ import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.SourcePositionHighlighter
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.plugins.scala.ScalaLanguage
-import org.jetbrains.plugins.scala.lang.psi.api.expr.ScFunctionExpr
+import org.jetbrains.plugins.scala.debugger.evaluation.util.DebuggerUtil
 
 class ScalaSourcePositionHighlighter extends SourcePositionHighlighter {
   override def getHighlightRange(sourcePosition: SourcePosition): TextRange = {
@@ -12,13 +12,10 @@ class ScalaSourcePositionHighlighter extends SourcePositionHighlighter {
     //noinspection InstanceOf
     if (sourcePosition.isInstanceOf[ScalaSourcePositionWithWholeLineHighlighted]) return null
 
-    val element = sourcePosition.getElementAt
+    val element = DebuggerUtil.elementAtSourcePosition(sourcePosition)
     if (element eq null) return null
 
-    element match {
-      case f: ScFunctionExpr => f.result.getOrElse(f).getTextRange
-      case e => e.getTextRange
-    }
+    element.getTextRange
   }
 
   private def isScalaLanguage(sourcePosition: SourcePosition): Boolean =

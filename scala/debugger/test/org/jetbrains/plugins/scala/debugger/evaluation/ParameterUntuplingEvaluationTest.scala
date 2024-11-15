@@ -4,6 +4,8 @@ package evaluation
 
 class ParameterUntuplingEvaluationTest_3 extends ParameterUntuplingEvaluationTestBase {
   override protected def supportedIn(version: ScalaVersion): Boolean = version == ScalaVersion.Latest.Scala_3
+
+  override def testOneLineLambda(): Unit = super.testOneLineLambda()
 }
 
 class ParameterUntuplingEvaluationTest_3_RC extends ParameterUntuplingEvaluationTestBase {

@@ -16,6 +16,7 @@ import org.jetbrains.jps.incremental.scala.{Client, DummyClient, MessageKind}
 import org.jetbrains.plugins.scala.NlsString
 import org.jetbrains.plugins.scala.compiler.data.ExpressionEvaluationArguments
 import org.jetbrains.plugins.scala.compiler.{CompileServerLauncher, RemoteServerRunner}
+import org.jetbrains.plugins.scala.debugger.evaluation.util.DebuggerUtil
 import org.jetbrains.plugins.scala.debugger.evaluation.{EvaluationException, ExpressionCompilerResolverListener}
 import org.jetbrains.plugins.scala.debugger.{DebuggerBundle, ScalaPositionManager}
 import org.jetbrains.plugins.scala.extensions.inReadAction
@@ -80,7 +81,7 @@ private[evaluation] final class ExpressionCompilerEvaluator(codeFragment: PsiEle
       }
       val thisObject = stackFrame.thisObject()
 
-      val packageName = inReadAction(ScalaPositionManager.findPackageName(position.getElementAt)).getOrElse("")
+      val packageName = inReadAction(ScalaPositionManager.findPackageName(DebuggerUtil.elementAtSourcePosition(position))).getOrElse("")
       val arguments = ExpressionEvaluationArguments(outDir, classpath, scalacOptions, source, line, expression, localVariableNames.toSet, packageName)
 
       val errors = Seq.newBuilder[NlsString]

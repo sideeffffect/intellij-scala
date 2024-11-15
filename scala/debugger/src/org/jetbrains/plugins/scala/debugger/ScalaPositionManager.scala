@@ -82,7 +82,8 @@ class ScalaPositionManager(val debugProcess: DebugProcess) extends PositionManag
       } yield {
         val normalizedLineNumber = if (lineNumber < -1) -1 else lineNumber
         calcPosition(psiFile, location, normalizedLineNumber).getOrElse {
-          SourcePosition.createFromLine(psiFile, normalizedLineNumber)
+          val position = SourcePosition.createFromLine(psiFile, normalizedLineNumber)
+          new ScalaSourcePositionWithWholeLineHighlighted(position)
         }
       }
     position.getOrThrow(NoDataException.INSTANCE)
@@ -424,7 +425,7 @@ class ScalaPositionManager(val debugProcess: DebugProcess) extends PositionManag
 
       if (possiblePositions.size <= 1) {
         possiblePositions.headOption.map { element =>
-          val wholeLineLambda = isLambda(element) && isIndyLambda(currentMethod)
+          val wholeLineLambda = isLambda(element) && isAnonfun(currentMethod)
           val highlightWholeLine = !wholeLineLambda
           (element, highlightWholeLine)
         }
@@ -440,13 +441,16 @@ class ScalaPositionManager(val debugProcess: DebugProcess) extends PositionManag
           case e: PsiElement if isLambda(e) => false
           case (_: ScExpression) childOf (_: ScParameter) => false
           case _ => true
-        }.map((_, false))
+        }.map((_, true))
       }
       else {
         val generatingPsiElem = findElementByReferenceType(location.declaringType())
         possiblePositions
           .find(p => generatingPsiElem.contains(findGeneratingClassOrMethodParent(p)))
-          .map((_, false))
+          .map { element =>
+            val wrap = !isLambda(element)
+            (element, wrap)
+          }
       }
     }
 

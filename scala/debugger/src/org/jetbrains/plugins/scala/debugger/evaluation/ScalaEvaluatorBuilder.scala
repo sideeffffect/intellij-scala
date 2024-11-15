@@ -7,7 +7,9 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.psi._
 import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.scala.debugger.DebuggerBundle
 import org.jetbrains.plugins.scala.debugger.evaluation.evaluator._
+import org.jetbrains.plugins.scala.debugger.evaluation.util.DebuggerUtil
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.api.base._
 import org.jetbrains.plugins.scala.lang.psi.api.expr._
@@ -22,7 +24,6 @@ import org.jetbrains.plugins.scala.project.{ProjectContext, ProjectContextOwner}
 import org.jetbrains.plugins.scala.statistics.ScalaDebuggerUsagesCollector
 import org.jetbrains.plugins.scala.util.AnonymousFunction
 import org.jetbrains.plugins.scala.{NlsString, Scala3Language}
-import org.jetbrains.plugins.scala.debugger.DebuggerBundle
 
 object ScalaEvaluatorBuilder extends EvaluatorBuilder {
   override def build(codeFragment: PsiElement, position: SourcePosition): ExpressionEvaluator = {
@@ -63,7 +64,7 @@ object ScalaEvaluatorBuilder extends EvaluatorBuilder {
     }
 
     def buildCompilingEvaluator: ScalaCompilingEvaluator = {
-      val compilingEvaluator = new ScalaCompilingEvaluator(position.getElementAt, scalaFragment)
+      val compilingEvaluator = new ScalaCompilingEvaluator(DebuggerUtil.elementAtSourcePosition(position), scalaFragment)
       cache.add(position, scalaFragment, compilingEvaluator).asInstanceOf[ScalaCompilingEvaluator]
     }
 
@@ -93,16 +94,8 @@ private[evaluation] class ScalaEvaluatorBuilder(val codeFragment: ScalaCodeFragm
 
   override implicit def projectContext: ProjectContext = codeFragment.projectContext
 
-  val contextClass: PsiElement = {
-    val maybeContextClass =
-      for {
-        pos <- Option(position)
-        elem <- Option(pos.getElementAt)
-      } yield {
-        getContextClass(elem, strict = false)
-      }
-    maybeContextClass.orNull
-  }
+  val contextClass: PsiElement =
+    Option(DebuggerUtil.elementAtSourcePosition(position)).map(getContextClass(_, strict = false)).orNull
 
   private def getEvaluator: Evaluator = new UnwrapRefEvaluator(fragmentEvaluator(codeFragment))
 

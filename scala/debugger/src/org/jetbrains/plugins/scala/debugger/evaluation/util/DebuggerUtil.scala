@@ -510,4 +510,10 @@ object DebuggerUtil {
     classes.find(predicate)
       .orElse(classes.headOption)
   }
+
+  def elementAtSourcePosition(position: SourcePosition): PsiElement =
+    position.getElementAt match {
+      case f: ScFunctionExpr => f.result.getOrElse(f)
+      case e => e
+    }
 }

@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Range
 import org.jetbrains.concurrency.{Promise, Promises}
 import org.jetbrains.plugins.scala.codeInspection.collections.{MethodRepr, stripped}
+import org.jetbrains.plugins.scala.debugger.evaluation.util.DebuggerUtil
 import org.jetbrains.plugins.scala.debugger.filters.ScalaDebuggerSettings
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
@@ -60,10 +61,7 @@ class ScalaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       case None => return Collections.emptyList[SmartStepTarget]()
     }
 
-    val element = position.getElementAt match {
-      case f: ScFunctionExpr => f.result.getOrElse(f)
-      case e => e
-    }
+    val element = DebuggerUtil.elementAtSourcePosition(position)
 
     val lineStart = element.getTextRange.getStartOffset
     val lineRange = new TextRange(lineStart, document.getLineEndOffset(line))
